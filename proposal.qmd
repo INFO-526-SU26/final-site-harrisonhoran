@@ -18,12 +18,14 @@ execute:
   warning: false
 ---
 
-```{r}
+```{r setup}
 #| label: load-pkgs
 #| message: false
-library(tidyverse)
-library(here)
-library(countdown)
+
+if (!require("pacman"))
+  install.packages("pacman")
+
+pacman::p_load(tidyverse, here, countdown, tidytuesdayR)
 
 # theme
 ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
@@ -40,21 +42,85 @@ knitr::opts_chunk$set(
 
 ```
 
-## Dataset
+## Dataset - The Languages of the World
+
+Source: <https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-12-23/readme.md>
 
 ```{r}
 #| label: load-dataset
 #| message: false
+
+tuesdata <- tidytuesdayR::tt_load('2025-12-23')
+
+# Primary datasets
+endangered_status <- tuesdata$endangered_status
+families <- tuesdata$families
+languages <- tuesdata$languages
+
+# Base, pre-cleaned data set underlying families and languages sets
+fam_lgs <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv")
 ```
 
-A brief description of your dataset including its provenance, dimensions, etc. as well as the reason why you chose this dataset.
+There are three primary datasets from TidyTuesday, each of which are derived from [Glottolog](https://glottolog.org/), which is an open-access linguistics database.
 
-Make sure to load the data and use inline code for some of this information.
+The focus of the data are the languages spoken across the world, where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), which is as follows:
+
+|   **AES status**   | AES Status Code | **\# of languages** | **% of languages** |
+|:--------------------:|:---------------:|:---------------:|:---------------:|
+| **not endangered** |        1        |        2770         |       35.34%       |
+|   **threatened**   |        2        |        1565         |       19.96%       |
+|    **shifting**    |        3        |        1799         |       22.95%       |
+|    **moribund**    |        4        |         421         |       5.37%        |
+| **nearly extinct** |        5        |         300         |       3.83%        |
+|    **extinct**     |        6        |         984         |       12.55%       |
+|     **total:**     |                 |        7839         |                    |
+
+Note: The 'families' and 'languages' datasets are derived from 'fam_lgs', using the following script provided by TidyTuesday:
+
+``` {.r fold="True"}
+# Imports
+library(tidyverse)
+
+# Download raw data and filter to endangered status
+endangered_status <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/values.csv") |> 
+  dplyr::filter(Parameter_ID == "aes") |> 
+  dplyr::select(Language_ID, Value, Code_ID) |> 
+  dplyr::rename(id = Language_ID,
+                status_code = Value,
+                status_label = Code_ID) |> 
+  dplyr::mutate(status_label = stringr::str_replace(stringr::str_remove(status_label, "^aes-"), "_", " "))
+
+# Download language and family data
+fam_lgs <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv")
+
+# Filter and clean language family data
+families <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "family") |> 
+  dplyr::select(ID, Name) |> 
+  dplyr::rename(Family = Name) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+
+# Filter and clean language data
+languages <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "language") |> 
+  dplyr::select(ID, Name, Macroarea, Latitude, Longitude, ISO639P3code, Countries, Is_Isolate, Family_ID) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+```
 
 ## Questions
 
-The two questions you want to answer.
+1.  What geographic patterns exist for endangered languages around the world?
+2.  Where is language shifting the most in the world?
 
 ## Analysis plan
 
 - A plan for answering each of the questions including the variables involved, variables to be created (if any), external data to be merged in (if any).
+
+### Question 1 - Global Patterns
+
+### Question 2 - Shifting Regions
