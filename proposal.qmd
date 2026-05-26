@@ -1,11 +1,11 @@
 ---
-title: "Proposal title"
-subtitle: "Proposal"
+title: "INFO 526 Final Project Proposal"
+subtitle: "The Languages of the World"
 author: 
-  - name: "Team Name"
+  - name: "Harrison Horan"
     affiliations:
       - name: "School of Information, University of Arizona"
-description: "Project description"
+description: "Visualizing the TidyTuesday The Languages of the World dataset, curated from Glottolog 5.2.1, an open-access database in linguistics."
 format:
   html:
     code-tools: true
@@ -22,6 +22,22 @@ execute:
 #| label: load-pkgs
 #| message: false
 library(tidyverse)
+library(here)
+library(countdown)
+
+# theme
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+options(width = 65)
+
+# figure defaults
+knitr::opts_chunk$set(
+  fig.width = 7,
+  fig.asp = 0.618,
+  fig.retina = 3,
+  fig.align = "center",
+  dpi = 300
+)
+
 ```
 
 ## Dataset
@@ -41,4 +57,4 @@ The two questions you want to answer.
 
 ## Analysis plan
 
--   A plan for answering each of the questions including the variables involved, variables to be created (if any), external data to be merged in (if any).
+- A plan for answering each of the questions including the variables involved, variables to be created (if any), external data to be merged in (if any).
