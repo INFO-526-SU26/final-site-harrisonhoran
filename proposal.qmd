@@ -44,7 +44,7 @@ knitr::opts_chunk$set(
 
 ## Dataset - The Languages of the World
 
-Source: <https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-12-23/readme.md>
+[TidyTuesday](https://github.com/rfordatascience/tidytuesday/blob/main/data/2025/2025-12-23/readme.md) \| [Glottolog Github](https://github.com/glottolog/glottolog)
 
 ```{r}
 #| label: load-dataset
@@ -64,10 +64,10 @@ fam_lgs <-
 
 There are three primary datasets from TidyTuesday, each of which are derived from [Glottolog](https://glottolog.org/), which is an open-access linguistics database.
 
-The focus of the data are the languages spoken across the world, where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), which is as follows:
+The focus of the data are the languages spoken across the world. Primarily where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), which is as follows:
 
 |   **AES status**   | AES Status Code | **\# of languages** | **% of languages** |
-|:--------------------:|:---------------:|:---------------:|:---------------:|
+|:----------------:|:----------------:|:-----------------:|:----------------:|
 | **not endangered** |        1        |        2770         |       35.34%       |
 |   **threatened**   |        2        |        1565         |       19.96%       |
 |    **shifting**    |        3        |        1799         |       22.95%       |
@@ -112,15 +112,87 @@ languages <-
   dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
 ```
 
+### Supplementary Data
+
+- Global Gross Domestic Product (GDP) change, year over year (since 1960) \| Source: [World Bank Group](https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?end=2024&start=1960&view=chart)
+
+  - File name: `GDP_by_country_time.csv`
+
+- UN Data
+
+  - List of Least Developed Countries (LDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-ldcs)
+
+  - List of Landlocked Developing Countries (LLDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/lldcs-national-reports)
+
+  - List of Small Island Developing States (SIDs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-sids)
+
+  - File name: `un_developing_countries_data.csv`
+
 ## Questions
 
 1.  What geographic patterns exist for endangered languages around the world?
-2.  Where is language shifting the most in the world?
+2.  What relationship has there been, if any, between countries' change in GDP and change in shifting or endangered languages?
 
-## Analysis plan
+## Analysis Details
 
-- A plan for answering each of the questions including the variables involved, variables to be created (if any), external data to be merged in (if any).
+I was a linguistics major in undergrad, so languages are naturally interesting to me, but I know very little about how languages intersect with geography. To that end, my questions are vague/observational rather than pointed/persuasive.
 
 ### Question 1 - Global Patterns
 
-### Question 2 - Shifting Regions
+'Patterns' could be interpreted many ways, so while I want to keep an open mind, here's the rough plan.
+
+#### Variables
+
+This question is made up entirely of qualitative variables. While the 'code' is technically numeric, the point of the visualization is to show density on a world map.
+
+1.  Endangered Status Code
+
+2.  Endangered Status Label (used for chart labels)
+
+3.  Language
+
+4.  Macroarea
+
+5.  Country
+
+6.  Latitude/Longitude
+
+7.  Family ID
+
+#### Visualization
+
+The obvious choice here is a world map, but the reach goal is to create a tabular visualization of the same dataset that allows for different visuals of the same data. I think this is especially useful when describing/surveying patterns in data. I expect to product something akin to this, but I'm not married to table, line, and bar charts as the alternative views:
+
+![](images/tabular_charts_example.png){width="527"}
+
+#### Expectations
+
+1.  Isolate languages will be more commonly found on island countries versus land-locked countries.
+    1.  Supplementary Data:
+2.  Endangered languages will more likely appear in less-populated areas of the world.
+    1.  Supplementary Data:
+3.  English, Chinese (Mandarin), and Spanish will have the broadest geographic span, measured in latitude/longitude range.
+
+#### Limitations
+
+### Question 2 - Shifting GDP vs. Shifting Languages
+
+#### Variables
+
+This question is made up entirely of qualitative variables. While the 'code' is technically numeric, the point of the visualization is to show density on a world map.
+
+1.  Endangered Status Code
+
+2.  Endangered Status Label (used for chart labels)
+
+3.  
+
+#### Visualization
+
+#### Expectations
+
+1.  Diversity of language (i.e. the number of unique languages spoken) will be negatively correlated to GDP.
+
+#### Limitations
+
+Unfortunately I haven't found data that show how AES statuses have changed over time. My ideal would be to compare change in language and change in GDP on the same time scale, but because of the lack of data, I will focus on the last one or two decades of GDP change per country.
