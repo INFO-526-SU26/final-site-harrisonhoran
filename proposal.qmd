@@ -114,24 +114,36 @@ languages <-
 
 ### Supplementary Data
 
-- Global Gross Domestic Product (GDP) change, year over year (since 1960) \| Source: [World Bank Group](https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?end=2024&start=1960&view=chart)
+- World Bank Group Data
 
   - File name: `GDP_by_country_time.csv`
 
+    - Global Gross Domestic Product (GDP) change, year over year (since 1960) \| Source: [World Bank Group](https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?end=2024&start=1960&view=chart)
+
 - UN Data
 
-  - List of Least Developed Countries (LDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-ldcs)
-
-  - List of Landlocked Developing Countries (LLDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/lldcs-national-reports)
-
-  - List of Small Island Developing States (SIDs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-sids)
-
   - File name: `un_developing_countries_data.csv`
+
+    - List of Least Developed Countries (LDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-ldcs)
+
+    - List of Landlocked Developing Countries (LLDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/lldcs-national-reports)
+
+    - List of Small Island Developing States (SIDs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-sids)
+
+  - File name: `unpopulation_dataportal.csv`
+
+    - Population data by country since 1960 for two variables \| Source: [United Nations](https://population.un.org/dataportal/home?df=6b74dd77-07a5-4cfc-91c1-0ed3c86d2b58)
+
+      - Population density
+
+      - Populating change
 
 ## Questions
 
 1.  What geographic patterns exist for endangered languages around the world?
-2.  What relationship has there been, if any, between countries' change in GDP and change in shifting or endangered languages?
+2.  What relationship exists between shifting and endangered languages and:
+    1.  Population density
+    2.  Change in GDP over the last 20 years
 
 ## Analysis Details
 
@@ -145,19 +157,21 @@ I was a linguistics major in undergrad, so languages are naturally interesting t
 
 This question is made up entirely of qualitative variables. While the 'code' is technically numeric, the point of the visualization is to show density on a world map.
 
-1.  Endangered Status Code
+1.  Endangered Status Code/Label
 
-2.  Endangered Status Label (used for chart labels)
+2.  Language
 
-3.  Language
+3.  Macroarea
 
-4.  Macroarea
+4.  Country
 
-5.  Country
+5.  Latitude/Longitude
 
-6.  Latitude/Longitude
+6.  Family ID
 
-7.  Family ID
+7.  Is Isolate?
+
+8.  
 
 #### Visualization
 
@@ -168,9 +182,9 @@ The obvious choice here is a world map, but the reach goal is to create a tabula
 #### Expectations
 
 1.  Isolate languages will be more commonly found on island countries versus land-locked countries.
-    1.  Supplementary Data:
+    1.  Supplementary Data: `un_developing_countries_data.csv`
 2.  Endangered languages will more likely appear in less-populated areas of the world.
-    1.  Supplementary Data:
+    1.  Supplementary Data: `unpopulation_dataportal.csv`
 3.  English, Chinese (Mandarin), and Spanish will have the broadest geographic span, measured in latitude/longitude range.
 
 #### Limitations
@@ -179,13 +193,11 @@ The obvious choice here is a world map, but the reach goal is to create a tabula
 
 #### Variables
 
-This question is made up entirely of qualitative variables. While the 'code' is technically numeric, the point of the visualization is to show density on a world map.
+This question is
 
-1.  Endangered Status Code
+1.  Endangered Status Code/Label
 
-2.  Endangered Status Label (used for chart labels)
-
-3.  
+2.  
 
 #### Visualization
 
