@@ -118,43 +118,32 @@ languages <-
 ### Supplementary Data
 
 - World Bank Group Data
-
   - File name: `GDP_by_country_time.csv`
 
     - Global Gross Domestic Product (GDP) change, year over year (since 1960) \| Source: [World Bank Group](https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG?end=2024&start=1960&view=chart)
-
 - UN Data
-
   - File name: `un_developing_countries_data.csv`
-
     - List of Least Developed Countries (LDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-ldcs)
 
     - List of Landlocked Developing Countries (LLDCs) \| Source: [United Nations](https://www.un.org/ohrlls/content/lldcs-national-reports)
 
     - List of Small Island Developing States (SIDs) \| Source: [United Nations](https://www.un.org/ohrlls/content/list-sids)
-
   - File name: `unpopulation_dataportal.csv`
-
     - Population data by country since 1960 for two variables \| Source: [United Nations](https://population.un.org/dataportal/home?df=6b74dd77-07a5-4cfc-91c1-0ed3c86d2b58)
 
       - Population density
 
       - Populating change
 
-## Questions
-
-1.  What geographic patterns exist for endangered languages around the world? Specifically:
-    1.  What relationship exists between a language's isolate status and its endangered status?
-    2.  Which language families span the widest geographic range?
-2.  What relationship exists between shifting/endangered languages and:
-    1.  Population change over the last 20 years
-    2.  Change in GDP over the last 20 years
-
 ## Analysis Details
 
 I was a linguistics major in undergrad, so languages are naturally interesting to me, but I know very little about how languages intersect with geography. To that end, I'm hoping to do some exploratory analysis alongside of the set questions listed here.
 
 ### Question 1 - Global Patterns
+
+1.  What geographic patterns exist for endangered languages around the world? Specifically:
+    1.  What relationship exists between a language's isolate status and its endangered status?
+    2.  Which language families span the widest geographic range?
 
 'Patterns' could be interpreted many ways, so while I want to keep an open mind, here area at least two questions I want to explore.
 
@@ -190,7 +179,11 @@ The obvious choice here is a world map, but the reach goal is to create a tabula
 
 I think the key challenge here is my lack of experience with geographic visualizations. This is largely why I chose the topic in the first place, though, and 'Visualizing geospatial data' lectures are timely. Beyond that, cleanly defining 'global reach' and 'land-locked countries' will be important.
 
-### Question 2 - Shifting GDP vs. Shifting Languages
+### Question 2 - Shifting Socioeconomically vs. Shifting Linguistically
+
+1.  What relationship exists between shifting/endangered languages and:
+    1.  Population change over the last 20 years
+    2.  Change in GDP over the last 20 years
 
 Endangered Status is qualitative by nature but also includes a numeric scale. Rather than create custom metrics using the AES scale, I'm going to lean on supplementary data (*italicized* below) for my quantitative analysis.
 
@@ -199,31 +192,32 @@ Endangered Status is qualitative by nature but also includes a numeric scale. Ra
 | **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
 |:---:|:------------:|:------------:|:------------:|:------------:|:------------:|
 | 1 | Language | Categorical | **`languages`** | Individual language name | Both |
-| 2 | Macroarea | Categorical | **`languages`** | Africa, Americas, Australia, Eurasia, Pacific, South America | Part 2 |
 | 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
 | 4 | Latitude / Longitude | Numerical | **`languages`** | Geographic coordinates for map placement | Both |
-| 5 | Family ID | Categorical | **`languages`** | Links to families dataset | Part 2 |
-| 6 | Is Isolate? | Categorical (Boolean) | **`languages`** | True if language belongs to no known family | Part 1 |
-| 7 | Endangered Status Label | Categorical (Ordinal) | **`endangered_status`** | not endangered → threatened → shifting → moribund → nearly extinct → extinct | Part 1 |
-| 8 | Endangered Status Code | Numerical (Ordinal) | **`endangered_status`** | AES scale 1–6 | Part 1 |
-| 9 | Landlocked Developing Country (LDC) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
-| 10 | Small Island Developing Country (SID) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
+| 5 | Family ID | Categorical | **`languages`** | Links to families dataset | Both |
+| 7 | Endangered Status Label | Categorical (Ordinal) | **`endangered_status`** | not endangered → threatened → shifting → moribund → nearly extinct → extinct | Both |
+| 8 | Endangered Status Code | Numerical (Ordinal) | **`endangered_status`** | AES scale 1–6 | Both |
+| 9 | Population change over the last 20 years | Numerical | `unpopulation_dataportal` | Year-over-year population change by country; joined at country level | Part 2 |
+| 10 | Change in GDP over the last 20 years | Numerical | `GDP_by_country_time` | Year-over-year GDP change by country; joined at country level | Part 2 |
 
 #### Visualization
 
+Even though I don't have endangered status data over time (see: limitations), I still plan to incorporate time series/trend visuals for change in GDP and population. The goal is combine change over time and categorical data (endangered status today) in a way that's equally meaningful and intuitive.
+
 #### Expectations
 
-1.  Diversity of language (i.e. the number of unique languages spoken) will be negatively correlated to GDP.
+1.  The highest concentration of `shifting` languages will be in countries/areas that have seen the most recent decline in population.
+2.  `shifting`, `moribund`, and `endangered` languages will roughly follow Pareto's rule in relation to GDP. That is, roughly 80% of the world's least spoken languages will exist in countries/areas that make up less than 20% of the world's GDP.
 
 #### Limitations
 
-This would have been especially useful to show trending over time via time lapse or otherwise. As a solution, I'm going to focus on the last two decades (2005-2025) as a measure of how much a country/macroarea is changing in population and GDP. Then I plan to use that data to compare against the static AES values of `shifting`, `moribund`, and `endangered`.
+As mentioned, I wasn't able to find past/trending endangered status data, only the current statuses for languages. This would have been especially useful to show trending over time via time lapse or otherwise. As a solution, I'm going to focus on the last two decades (2005-2025) as a measure of how much a country/macroarea is changing in population and GDP. Then I plan to use that data to compare against the static AES values of `shifting`, `moribund`, and `endangered`.
 
 ### Project Timeline
 
-|  Week  |              Deliverable               |   Deadline    |
-|:------:|:--------------------------------------:|:-------------:|
-| Week 1 |        Proposal + Peer Reviews         | June 12, 2026 |
-| Week 2 |       Data Wrangling + Mutation        | June 19, 2026 |
-| Week 3 |     Visualizations + Begin Writeup     | June 26, 2026 |
-| Week 4 | Complete Writeup + Record Presentation | July 3, 2026  |
+|  Week  |              Deliverable               |   Deadline    |   Status    |
+|:---------:|:-------------------:|:-------------------:|:-------------------:|
+| Week 1 |        Proposal + Peer Reviews         | June 12, 2026 | In Progress |
+| Week 2 |       Data Wrangling + Mutation        | June 19, 2026 | In Progress |
+| Week 3 |     Visualizations + Begin Writeup     | June 26, 2026 | Not Started |
+| Week 4 | Complete Writeup + Record Presentation | July 3, 2026  | Not Started |
