@@ -21,11 +21,13 @@ execute:
 ```{r setup}
 #| label: load-pkgs
 #| message: false
+#| echo: False
 
 if (!require("pacman"))
   install.packages("pacman")
 
-pacman::p_load(tidyverse, here, countdown, tidytuesdayR)
+pacman::p_load(tidyverse, here, countdown, tidytuesdayR, lubridate, 
+               janitor, showtext, scico, DT, readr, ggridges)
 
 # theme
 ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
@@ -49,6 +51,7 @@ knitr::opts_chunk$set(
 ```{r}
 #| label: load-dataset
 #| message: false
+#| echo: False
 
 tuesdata <- tidytuesdayR::tt_load('2025-12-23')
 
@@ -140,64 +143,71 @@ languages <-
 
 ## Questions
 
-1.  What geographic patterns exist for endangered languages around the world?
-2.  What relationship exists between shifting and endangered languages and:
-    1.  Population density
+1.  What geographic patterns exist for endangered languages around the world? Specifically:
+    1.  What relationship exists between a language's isolate status and its endangered status?
+    2.  Which language families span the widest geographic range?
+2.  What relationship exists between shifting/endangered languages and:
+    1.  Population change over the last 20 years
     2.  Change in GDP over the last 20 years
 
 ## Analysis Details
 
-I was a linguistics major in undergrad, so languages are naturally interesting to me, but I know very little about how languages intersect with geography. To that end, my questions are vague/observational rather than pointed/persuasive.
+I was a linguistics major in undergrad, so languages are naturally interesting to me, but I know very little about how languages intersect with geography. To that end, I'm hoping to do some exploratory analysis alongside of the set questions listed here.
 
 ### Question 1 - Global Patterns
 
-'Patterns' could be interpreted many ways, so while I want to keep an open mind, here's the rough plan.
+'Patterns' could be interpreted many ways, so while I want to keep an open mind, here area at least two questions I want to explore.
 
 #### Variables
 
-This question is made up entirely of qualitative variables. While the 'code' is technically numeric, the point of the visualization is to show density on a world map.
-
-1.  Endangered Status Code/Label
-
-2.  Language
-
-3.  Macroarea
-
-4.  Country
-
-5.  Latitude/Longitude
-
-6.  Family ID
-
-7.  Is Isolate?
-
-8.  
+| **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
+|:----:|:------------:|:------------:|:------------:|:------------:|:------------:|
+| 1 | Language | Categorical | **`languages`** | Individual language name | Both |
+| 2 | Macroarea | Categorical | **`languages`** | Africa, Americas, Australia, Eurasia, Pacific, South America | Both |
+| 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
+| 4 | Latitude / Longitude | Numerical | **`languages`** | Geographic coordinates for map placement | Both |
+| 5 | Family ID | Categorical | **`languages`** | Links to families dataset | Part 2 |
+| 6 | Is Isolate? | Categorical (Boolean) | **`languages`** | True if language belongs to no known family | Part 1 |
+| 7 | Endangered Status Label | Categorical (Ordinal) | **`endangered_status`** | not endangered → threatened → shifting → moribund → nearly extinct → extinct | Part 1 |
+| 8 | Endangered Status Code | Numerical (Ordinal) | **`endangered_status`** | AES scale 1–6 | Part 1 |
+| 9 | Landlocked Developing Country (LDC) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
+| 10 | Small Island Developing Country (SID) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
 
 #### Visualization
 
-The obvious choice here is a world map, but the reach goal is to create a tabular visualization of the same dataset that allows for different visuals of the same data. I think this is especially useful when describing/surveying patterns in data. I expect to product something akin to this, but I'm not married to table, line, and bar charts as the alternative views:
+The obvious choice here is a world map, but the reach goal is to create a tabular visualization of the same dataset that allows for different perspectives of the same data. I think this is especially useful when describing/surveying patterns in data. I expect to product something akin to this, but I'm not married to table, line, and bar charts as the alternative views:
 
 ![](images/tabular_charts_example.png){width="527"}
 
 #### Expectations
 
-1.  Isolate languages will be more commonly found on island countries versus land-locked countries.
+1.  Isolate languages will be more likely to be endangered than non-isolates.
+2.  Isolate languages will be more commonly found on island countries versus land-locked countries.
     1.  Supplementary Data: `un_developing_countries_data.csv`
-2.  Endangered languages will more likely appear in less-populated areas of the world.
-    1.  Supplementary Data: `unpopulation_dataportal.csv`
-3.  English, Chinese (Mandarin), and Spanish will have the broadest geographic span, measured in latitude/longitude range.
+3.  Child languages of English and Spanish will have the widest global reach.
 
 #### Limitations
 
+I think the key challenge here is my lack of experience with geographic visualizations. This is largely why I chose the topic in the first place, though, and 'Visualizing geospatial data' lectures are timely. Beyond that, cleanly defining 'global reach' and 'land-locked countries' will be important.
+
 ### Question 2 - Shifting GDP vs. Shifting Languages
+
+Endangered Status is qualitative by nature but also includes a numeric scale. Rather than create custom metrics using the AES scale, I'm going to lean on supplementary data (*italicized* below) for my quantitative analysis.
 
 #### Variables
 
-This question is
-
-1.  Endangered Status Code/Label
-
-2.  
+| **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
+|:---:|:------------:|:------------:|:------------:|:------------:|:------------:|
+| 1 | Language | Categorical | **`languages`** | Individual language name | Both |
+| 2 | Macroarea | Categorical | **`languages`** | Africa, Americas, Australia, Eurasia, Pacific, South America | Part 2 |
+| 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
+| 4 | Latitude / Longitude | Numerical | **`languages`** | Geographic coordinates for map placement | Both |
+| 5 | Family ID | Categorical | **`languages`** | Links to families dataset | Part 2 |
+| 6 | Is Isolate? | Categorical (Boolean) | **`languages`** | True if language belongs to no known family | Part 1 |
+| 7 | Endangered Status Label | Categorical (Ordinal) | **`endangered_status`** | not endangered → threatened → shifting → moribund → nearly extinct → extinct | Part 1 |
+| 8 | Endangered Status Code | Numerical (Ordinal) | **`endangered_status`** | AES scale 1–6 | Part 1 |
+| 9 | Landlocked Developing Country (LDC) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
+| 10 | Small Island Developing Country (SID) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
 
 #### Visualization
 
@@ -207,4 +217,13 @@ This question is
 
 #### Limitations
 
-Unfortunately I haven't found data that show how AES statuses have changed over time. My ideal would be to compare change in language and change in GDP on the same time scale, but because of the lack of data, I will focus on the last one or two decades of GDP change per country.
+This would have been especially useful to show trending over time via time lapse or otherwise. As a solution, I'm going to focus on the last two decades (2005-2025) as a measure of how much a country/macroarea is changing in population and GDP. Then I plan to use that data to compare against the static AES values of `shifting`, `moribund`, and `endangered`.
+
+### Project Timeline
+
+|  Week  |              Deliverable               |   Deadline    |
+|:------:|:--------------------------------------:|:-------------:|
+| Week 1 |        Proposal + Peer Reviews         | June 12, 2026 |
+| Week 2 |       Data Wrangling + Mutation        | June 19, 2026 |
+| Week 3 |     Visualizations + Begin Writeup     | June 26, 2026 |
+| Week 4 | Complete Writeup + Record Presentation | July 3, 2026  |
