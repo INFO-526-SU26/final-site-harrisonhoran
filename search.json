@@ -1,0 +1,107 @@
+[
+  {
+    "objectID": "proposal.html",
+    "href": "proposal.html",
+    "title": "INFO 526 Final Project Proposal",
+    "section": "",
+    "text": "TidyTuesday | Glottolog Github\nThere are three primary datasets from TidyTuesday, each of which are derived from Glottolog, which is an open-access linguistics database.\nThe focus of the data are the languages spoken across the world. Primarily where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the Agglomerated Endangerment Scale (AES), which is as follows:\n\n\n\n\n\n\n\n\n\nAES status\nAES Status Code\n# of languages\n% of languages\n\n\n\n\nnot endangered\n1\n2770\n35.34%\n\n\nthreatened\n2\n1565\n19.96%\n\n\nshifting\n3\n1799\n22.95%\n\n\nmoribund\n4\n421\n5.37%\n\n\nnearly extinct\n5\n300\n3.83%\n\n\nextinct\n6\n984\n12.55%\n\n\ntotal:\n\n7839\n\n\n\n\nNote: The ‘families’ and ‘languages’ datasets are derived from ‘fam_lgs’, using the following script provided by TidyTuesday:\n# Imports\nlibrary(tidyverse)\n\n# Download raw data and filter to endangered status\nendangered_status &lt;- \n  readr::read_csv(\"https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/values.csv\") |&gt; \n  dplyr::filter(Parameter_ID == \"aes\") |&gt; \n  dplyr::select(Language_ID, Value, Code_ID) |&gt; \n  dplyr::rename(id = Language_ID,\n                status_code = Value,\n                status_label = Code_ID) |&gt; \n  dplyr::mutate(status_label = stringr::str_replace(stringr::str_remove(status_label, \"^aes-\"), \"_\", \" \"))\n\n# Download language and family data\nfam_lgs &lt;- \n  readr::read_csv(\"https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv\")\n\n# Filter and clean language family data\nfamilies &lt;- \n  fam_lgs |&gt; \n  dplyr::filter(Level == \"family\") |&gt; \n  dplyr::select(ID, Name) |&gt; \n  dplyr::rename(Family = Name) |&gt; \n  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())\n\n# Filter and clean language data\nlanguages &lt;- \n  fam_lgs |&gt; \n  dplyr::filter(Level == \"language\") |&gt; \n  dplyr::select(ID, Name, Macroarea, Latitude, Longitude, ISO639P3code, Countries, Is_Isolate, Family_ID) |&gt; \n  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())\n\n\n\nWorld Bank Group Data\n\nFile name: GDP_by_country_time.csv\n\nGlobal Gross Domestic Product (GDP) change, year over year (since 1960) | Source: World Bank Group\n\n\nUN Data\n\nFile name: un_developing_countries_data.csv\n\nList of Least Developed Countries (LDCs) | Source: United Nations\nList of Landlocked Developing Countries (LLDCs) | Source: United Nations\nList of Small Island Developing States (SIDs) | Source: United Nations\n\nFile name: unpopulation_dataportal.csv\n\nPopulation data by country since 1960 for two variables | Source: United Nations\n\nPopulation density\nPopulating change"
+  },
+  {
+    "objectID": "proposal.html#dataset---the-languages-of-the-world",
+    "href": "proposal.html#dataset---the-languages-of-the-world",
+    "title": "INFO 526 Final Project Proposal",
+    "section": "",
+    "text": "TidyTuesday | Glottolog Github\nThere are three primary datasets from TidyTuesday, each of which are derived from Glottolog, which is an open-access linguistics database.\nThe focus of the data are the languages spoken across the world. Primarily where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the Agglomerated Endangerment Scale (AES), which is as follows:\n\n\n\n\n\n\n\n\n\nAES status\nAES Status Code\n# of languages\n% of languages\n\n\n\n\nnot endangered\n1\n2770\n35.34%\n\n\nthreatened\n2\n1565\n19.96%\n\n\nshifting\n3\n1799\n22.95%\n\n\nmoribund\n4\n421\n5.37%\n\n\nnearly extinct\n5\n300\n3.83%\n\n\nextinct\n6\n984\n12.55%\n\n\ntotal:\n\n7839\n\n\n\n\nNote: The ‘families’ and ‘languages’ datasets are derived from ‘fam_lgs’, using the following script provided by TidyTuesday:\n# Imports\nlibrary(tidyverse)\n\n# Download raw data and filter to endangered status\nendangered_status &lt;- \n  readr::read_csv(\"https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/values.csv\") |&gt; \n  dplyr::filter(Parameter_ID == \"aes\") |&gt; \n  dplyr::select(Language_ID, Value, Code_ID) |&gt; \n  dplyr::rename(id = Language_ID,\n                status_code = Value,\n                status_label = Code_ID) |&gt; \n  dplyr::mutate(status_label = stringr::str_replace(stringr::str_remove(status_label, \"^aes-\"), \"_\", \" \"))\n\n# Download language and family data\nfam_lgs &lt;- \n  readr::read_csv(\"https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv\")\n\n# Filter and clean language family data\nfamilies &lt;- \n  fam_lgs |&gt; \n  dplyr::filter(Level == \"family\") |&gt; \n  dplyr::select(ID, Name) |&gt; \n  dplyr::rename(Family = Name) |&gt; \n  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())\n\n# Filter and clean language data\nlanguages &lt;- \n  fam_lgs |&gt; \n  dplyr::filter(Level == \"language\") |&gt; \n  dplyr::select(ID, Name, Macroarea, Latitude, Longitude, ISO639P3code, Countries, Is_Isolate, Family_ID) |&gt; \n  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())\n\n\n\nWorld Bank Group Data\n\nFile name: GDP_by_country_time.csv\n\nGlobal Gross Domestic Product (GDP) change, year over year (since 1960) | Source: World Bank Group\n\n\nUN Data\n\nFile name: un_developing_countries_data.csv\n\nList of Least Developed Countries (LDCs) | Source: United Nations\nList of Landlocked Developing Countries (LLDCs) | Source: United Nations\nList of Small Island Developing States (SIDs) | Source: United Nations\n\nFile name: unpopulation_dataportal.csv\n\nPopulation data by country since 1960 for two variables | Source: United Nations\n\nPopulation density\nPopulating change"
+  },
+  {
+    "objectID": "proposal.html#analysis-details",
+    "href": "proposal.html#analysis-details",
+    "title": "INFO 526 Final Project Proposal",
+    "section": "Analysis Details",
+    "text": "Analysis Details\nI was a linguistics major in undergrad, so languages are naturally interesting to me, but I know very little about how languages intersect with geography. To that end, I’m hoping to do some exploratory analysis alongside of the set questions listed here.\n\nQuestion 1 - Global Patterns\n\nWhat geographic patterns exist for endangered languages around the world? Specifically:\n\nWhat relationship exists between a language’s isolate status and its endangered status?\nWhich language families span the widest geographic range?\n\n\n‘Patterns’ could be interpreted many ways, so while I want to keep an open mind, here area at least two questions I want to explore.\n\nVariables\n\n\n\n\n\n\n\n\n\n\n\n#\nVariable\nType\nSource\nNotes\nUsed For?\n\n\n\n\n1\nLanguage\nCategorical\nlanguages\nIndividual language name\nBoth\n\n\n2\nMacroarea\nCategorical\nlanguages\nAfrica, Americas, Australia, Eurasia, Pacific, South America\nBoth\n\n\n3\nCountry\nCategorical\nlanguages\nJoin key for supplementary datasets\nBoth\n\n\n4\nLatitude / Longitude\nNumerical\nlanguages\nGeographic coordinates for map placement\nBoth\n\n\n5\nFamily ID\nCategorical\nlanguages\nLinks to families dataset\nPart 2\n\n\n6\nIs Isolate?\nCategorical (Boolean)\nlanguages\nTrue if language belongs to no known family\nPart 1\n\n\n7\nEndangered Status Label\nCategorical (Ordinal)\nendangered_status\nnot endangered → threatened → shifting → moribund → nearly extinct → extinct\nPart 1\n\n\n8\nEndangered Status Code\nNumerical (Ordinal)\nendangered_status\nAES scale 1–6\nPart 1\n\n\n9\nLandlocked Developing Country (LDC) Designation\nCategorical (Boolean)\nun_developing_countries_data\nUN classification; joined at country level\nPart 1\n\n\n10\nSmall Island Developing Country (SID) Designation\nCategorical (Boolean)\nun_developing_countries_data\nUN classification; joined at country level\nPart 1\n\n\n\n\n\nVisualization\nThe obvious choice here is a world map, but the reach goal is to create a tabular visualization of the same dataset that allows for different perspectives of the same data. I think this is especially useful when describing/surveying patterns in data. I expect to product something akin to this, but I’m not married to table, line, and bar charts as the alternative views:\n\n\n\nExpectations\n\nIsolate languages will be more likely to be endangered than non-isolates.\nIsolate languages will be more commonly found on island countries versus land-locked countries.\n\nSupplementary Data: un_developing_countries_data.csv\n\nChild languages of English and Spanish will have the widest global reach.\n\n\n\nLimitations\nI think the key challenge here is my lack of experience with geographic visualizations. This is largely why I chose the topic in the first place, though, and ‘Visualizing geospatial data’ lectures are timely. Beyond that, cleanly defining ‘global reach’ and ‘land-locked countries’ will be important.\n\n\n\nQuestion 2 - Shifting Socioeconomically vs. Shifting Linguistically\n\nWhat relationship exists between shifting/endangered languages and:\n\nPopulation change over the last 20 years\nChange in GDP over the last 20 years\n\n\nEndangered Status is qualitative by nature but also includes a numeric scale. Rather than create custom metrics using the AES scale, I’m going to lean on supplementary data (italicized below) for my quantitative analysis.\n\nVariables\n\n\n\n\n\n\n\n\n\n\n\n#\nVariable\nType\nSource\nNotes\nUsed For?\n\n\n\n\n1\nLanguage\nCategorical\nlanguages\nIndividual language name\nBoth\n\n\n3\nCountry\nCategorical\nlanguages\nJoin key for supplementary datasets\nBoth\n\n\n4\nLatitude / Longitude\nNumerical\nlanguages\nGeographic coordinates for map placement\nBoth\n\n\n5\nFamily ID\nCategorical\nlanguages\nLinks to families dataset\nBoth\n\n\n7\nEndangered Status Label\nCategorical (Ordinal)\nendangered_status\nnot endangered → threatened → shifting → moribund → nearly extinct → extinct\nBoth\n\n\n8\nEndangered Status Code\nNumerical (Ordinal)\nendangered_status\nAES scale 1–6\nBoth\n\n\n9\nPopulation change over the last 20 years\nNumerical\nunpopulation_dataportal\nYear-over-year population change by country; joined at country level\nPart 2\n\n\n10\nChange in GDP over the last 20 years\nNumerical\nGDP_by_country_time\nYear-over-year GDP change by country; joined at country level\nPart 2\n\n\n\n\n\nVisualization\nEven though I don’t have endangered status data over time (see: limitations), I still plan to incorporate time series/trend visuals for change in GDP and population. The goal is combine change over time and categorical data (endangered status today) in a way that’s equally meaningful and intuitive.\n\n\nExpectations\n\nThe highest concentration of shifting languages will be in countries/areas that have seen the most recent decline in population.\nshifting, moribund, and endangered languages will roughly follow Pareto’s rule in relation to GDP. That is, roughly 80% of the world’s least spoken languages will exist in countries/areas that make up less than 20% of the world’s GDP.\n\n\n\nLimitations\nAs mentioned, I wasn’t able to find past/trending endangered status data, only the current statuses for languages. This would have been especially useful to show trending over time via time lapse or otherwise. As a solution, I’m going to focus on the last two decades (2005-2025) as a measure of how much a country/macroarea is changing in population and GDP. Then I plan to use that data to compare against the static AES values of shifting, moribund, and endangered.\n\n\n\nProject Timeline\n\n\n\n\n\n\n\n\n\nWeek\nDeliverable\nDeadline\nStatus\n\n\n\n\nWeek 1\nProposal + Peer Reviews\nJune 12, 2026\nIn Progress\n\n\nWeek 2\nData Wrangling + Mutation\nJune 19, 2026\nIn Progress\n\n\nWeek 3\nVisualizations + Begin Writeup\nJune 26, 2026\nNot Started\n\n\nWeek 4\nComplete Writeup + Record Presentation\nJuly 3, 2026\nNot Started"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Project Title",
+    "section": "",
+    "text": "Add project abstract here."
+  },
+  {
+    "objectID": "index.html#abstract",
+    "href": "index.html#abstract",
+    "title": "Project Title",
+    "section": "",
+    "text": "Add project abstract here."
+  },
+  {
+    "objectID": "presentation.html#quarto",
+    "href": "presentation.html#quarto",
+    "title": "Project title",
+    "section": "Quarto",
+    "text": "Quarto\n\nThe presentation is created using the Quarto CLI\n## sets the start of a new slide"
+  },
+  {
+    "objectID": "presentation.html#layouts",
+    "href": "presentation.html#layouts",
+    "title": "Project title",
+    "section": "Layouts",
+    "text": "Layouts\nYou can use plain text\n\n\n\nor bullet points1\n\n\nor in two columns\n\n\nlike\nthis\n\nAnd add footnotes"
+  },
+  {
+    "objectID": "presentation.html#code",
+    "href": "presentation.html#code",
+    "title": "Project title",
+    "section": "Code",
+    "text": "Code\n\n\n# A tibble: 2 × 5\n  term        estimate std.error statistic       p.value\n  &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;         &lt;dbl&gt;\n1 (Intercept)   25.3      3.08        8.22 0.00000000358\n2 speed         -0.116    0.0642     -1.81 0.0806       \n\n\n# A tibble: 1 × 12\n  r.squared adj.r.squared sigma statistic p.value    df logLik   AIC   BIC\n      &lt;dbl&gt;         &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;\n1    0.0983        0.0682  5.82      3.27  0.0806     1  -101.  207.  212.\n# ℹ 3 more variables: deviance &lt;dbl&gt;, df.residual &lt;int&gt;, nobs &lt;int&gt;"
+  },
+  {
+    "objectID": "presentation.html#plots",
+    "href": "presentation.html#plots",
+    "title": "Project title",
+    "section": "Plots",
+    "text": "Plots"
+  },
+  {
+    "objectID": "presentation.html#plot-and-text",
+    "href": "presentation.html#plot-and-text",
+    "title": "Project title",
+    "section": "Plot and text",
+    "text": "Plot and text\n\n\n\nSome text\ngoes here"
+  },
+  {
+    "objectID": "presentation.html#tables",
+    "href": "presentation.html#tables",
+    "title": "Project title",
+    "section": "Tables",
+    "text": "Tables\nIf you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,\n\n\n\n\n\nspecies\nisland\nbill_length_mm\nbill_depth_mm\nflipper_length_mm\nbody_mass_g\nsex\n\n\n\n\nAdelie\nTorgersen\n39.1\n18.7\n181\n3750\nmale\n\n\nAdelie\nTorgersen\n39.5\n17.4\n186\n3800\nfemale\n\n\nAdelie\nTorgersen\n40.3\n18.0\n195\n3250\nfemale\n\n\nAdelie\nTorgersen\nNA\nNA\nNA\nNA\nNA\n\n\nAdelie\nTorgersen\n36.7\n19.3\n193\n3450\nfemale\n\n\nAdelie\nTorgersen\n39.3\n20.6\n190\n3650\nmale"
+  },
+  {
+    "objectID": "presentation.html#images",
+    "href": "presentation.html#images",
+    "title": "Project title",
+    "section": "Images",
+    "text": "Images\n\nImage credit: Danielle Navarro, Percolate."
+  },
+  {
+    "objectID": "presentation.html#math-expressions",
+    "href": "presentation.html#math-expressions",
+    "title": "Project title",
+    "section": "Math Expressions",
+    "text": "Math Expressions\nYou can write LaTeX math expressions inside a pair of dollar signs, e.g. $\\alpha+\\beta$ renders \\(\\alpha + \\beta\\). You can use the display style with double dollar signs:\n$$\\bar{X}=\\frac{1}{n}\\sum_{i=1}^nX_i$$\n\\[\n\\bar{X}=\\frac{1}{n}\\sum_{i=1}^nX_i\n\\]\nLimitations:\n\nThe source code of a LaTeX math expression must be in one line, unless it is inside a pair of double dollar signs, in which case the starting $$ must appear in the very beginning of a line, followed immediately by a non-space character, and the ending $$ must be at the end of a line, led by a non-space character;\nThere should not be spaces after the opening $ or before the closing $."
+  },
+  {
+    "objectID": "presentation.html#feeling-adventurous",
+    "href": "presentation.html#feeling-adventurous",
+    "title": "Project title",
+    "section": "Feeling adventurous?",
+    "text": "Feeling adventurous?\n\nYou are welcomed to use the default styling of the slides. In fact, that’s what I expect majority of you will do. You will differentiate yourself with the content of your presentation.\nBut some of you might want to play around with slide styling. Some solutions for this can be found at https://quarto.org/docs/presentations/revealjs."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "This project was developed by [Team Name] For INFO 526 - Data Analysis and Visualization at the University of Arizona, taught by Dr. Greg Chism. The team is comprised of the following team members.\n\nTeam member 1: One sentence description of Team member 1 (e.g., year, major, etc.).\nTeam member 2: One sentence description of Team member 2 (e.g., year, major, etc.).\nTeam member 3: One sentence description of Team member 3 (e.g., year, major, etc.).\nTeam member 4: One sentence description of Team member 4 (e.g., year, major, etc.)."
+  }
+]
