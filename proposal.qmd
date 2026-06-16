@@ -27,7 +27,8 @@ if (!require("pacman"))
   install.packages("pacman")
 
 pacman::p_load(tidyverse, here, countdown, tidytuesdayR, lubridate, 
-               janitor, showtext, scico, DT, readr, ggridges)
+               janitor, showtext, scico, DT, readr, ggridges, sf,
+               ggmap, leaflet, mapproj, geofacet, glue)
 
 # theme
 ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
@@ -135,9 +136,26 @@ languages <-
 
       - Populating change
 
+```{r supplemental-data}
+
+# Gross domestic product
+gdp <- 
+  readr::read_csv("data/GDP_by_country_time.csv", skip = 4)
+
+# United Nations' developing countries list
+dev_countries <- 
+  readr::read_csv("data/un_developing_countries_data.csv")
+
+# Population change and density data by country
+pop <- 
+  readr::read_csv("data/unpopulation_dataportal.csv")
+```
+
 ## Analysis Details
 
 I was a linguistics major in undergrad, so languages are naturally interesting to me, but I know very little about how languages intersect with geography. To that end, I'm hoping to do some exploratory analysis alongside of the set questions listed here.
+
+'Patterns' could be interpreted many ways, so while I want to keep an open mind, here area at least two questions I want to explore.
 
 ### Question 1 - Global Patterns
 
@@ -145,12 +163,18 @@ I was a linguistics major in undergrad, so languages are naturally interesting t
     1.  What relationship exists between a language's isolate status and its endangered status?
     2.  Which language families span the widest geographic range?
 
-'Patterns' could be interpreted many ways, so while I want to keep an open mind, here area at least two questions I want to explore.
+#### Data Wrangling
+
+1.  Create `master_languages` dataframe
+    1.  left_join `endangered_status` on (language) `id`
+        1.  `status_code`
+        2.  `status_label`
+    2.  left_join `families` on `languages$family_id` and `families$id`
 
 #### Variables
 
 | **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
-|:----:|:------------:|:------------:|:------------:|:------------:|:------------:|
+|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
 | 1 | Language | Categorical | **`languages`** | Individual language name | Both |
 | 2 | Macroarea | Categorical | **`languages`** | Africa, Americas, Australia, Eurasia, Pacific, South America | Both |
 | 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
@@ -161,6 +185,9 @@ I was a linguistics major in undergrad, so languages are naturally interesting t
 | 8 | Endangered Status Code | Numerical (Ordinal) | **`endangered_status`** | AES scale 1–6 | Part 1 |
 | 9 | Landlocked Developing Country (LDC) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
 | 10 | Small Island Developing Country (SID) Designation | Categorical (Boolean) | **`un_developing_countries_data`** | UN classification; joined at country level | Part 1 |
+| 11 | Global Reach | Numerical | **`languages`** | Custom calculated metric[^1] | Part 2 |
+
+[^1]: Global reach = Geographic area, measured in latitude and longitude, covered by speakers of the language
 
 #### Visualization
 
@@ -187,10 +214,17 @@ I think the key challenge here is my lack of experience with geographic visualiz
 
 Endangered Status is qualitative by nature but also includes a numeric scale. Rather than create custom metrics using the AES scale, I'm going to lean on supplementary data (*italicized* below) for my quantitative analysis.
 
+#### Data Wrangling
+
+1.  Create `master_countries` dataframe
+    1.  Begin with `master_languages` dataframe
+    2.  Filter for
+    3.  left_join `families` on `languages.family_id` and `families.id`
+
 #### Variables
 
 | **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
-|:---:|:------------:|:------------:|:------------:|:------------:|:------------:|
+|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
 | 1 | Language | Categorical | **`languages`** | Individual language name | Both |
 | 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
 | 4 | Latitude / Longitude | Numerical | **`languages`** | Geographic coordinates for map placement | Both |
@@ -216,7 +250,7 @@ As mentioned, I wasn't able to find past/trending endangered status data, only t
 ### Project Timeline
 
 |  Week  |              Deliverable               |   Deadline    |   Status    |
-|:---------:|:-------------------:|:-------------------:|:-------------------:|
+|:----------------:|:----------------:|:----------------:|:----------------:|
 | Week 1 |        Proposal + Peer Reviews         | June 12, 2026 | In Progress |
 | Week 2 |       Data Wrangling + Mutation        | June 19, 2026 | In Progress |
 | Week 3 |     Visualizations + Begin Writeup     | June 26, 2026 | Not Started |
