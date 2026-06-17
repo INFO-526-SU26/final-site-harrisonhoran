@@ -215,7 +215,7 @@ Endangered Status is qualitative by nature but also includes a numeric scale. Ra
 
 1.  Create `master_countries` dataframe
     1.  Begin with `master_languages` dataframe
-    2.  Filter for shifting, moribund, and endangered AES statuses
+    2.  Filter for `shifting`, `moribund`, and `endangered` AES statuses
     3.  
     4.  left_join `families` on `languages.family_id` and `families.id`
 
