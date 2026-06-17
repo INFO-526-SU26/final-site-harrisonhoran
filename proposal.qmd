@@ -54,38 +54,6 @@ knitr::opts_chunk$set(
 #| message: false
 #| echo: False
 
-tuesdata <- tidytuesdayR::tt_load('2025-12-23')
-
-# Primary datasets
-endangered_status <- tuesdata$endangered_status
-families <- tuesdata$families
-languages <- tuesdata$languages
-
-# Base, pre-cleaned data set underlying families and languages sets
-fam_lgs <- 
-  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv")
-```
-
-There are three primary datasets from TidyTuesday, each of which are derived from [Glottolog](https://glottolog.org/), which is an open-access linguistics database.
-
-The focus of the data are the languages spoken across the world. Primarily where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), which is as follows:
-
-|   **AES status**   | AES Status Code | **\# of languages** | **% of languages** |
-|:----------------:|:----------------:|:-----------------:|:----------------:|
-| **not endangered** |        1        |        2770         |       35.34%       |
-|   **threatened**   |        2        |        1565         |       19.96%       |
-|    **shifting**    |        3        |        1799         |       22.95%       |
-|    **moribund**    |        4        |         421         |       5.37%        |
-| **nearly extinct** |        5        |         300         |       3.83%        |
-|    **extinct**     |        6        |         984         |       12.55%       |
-|     **total:**     |                 |        7839         |                    |
-
-Note: The 'families' and 'languages' datasets are derived from 'fam_lgs', using the following script provided by TidyTuesday:
-
-``` {.r fold="True"}
-# Imports
-library(tidyverse)
-
 # Download raw data and filter to endangered status
 endangered_status <- 
   readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/values.csv") |> 
@@ -116,6 +84,20 @@ languages <-
   dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
 ```
 
+There are three primary datasets from TidyTuesday, each of which are derived from [Glottolog](https://glottolog.org/), which is an open-access linguistics database.
+
+The focus of the data are the languages spoken across the world. Primarily where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), which is as follows:
+
+|   **AES status**   | AES Status Code | **\# of languages** | **% of languages** |
+|:----------------:|:----------------:|:-----------------:|:----------------:|
+| **not endangered** |        1        |        2770         |       35.34%       |
+|   **threatened**   |        2        |        1565         |       19.96%       |
+|    **shifting**    |        3        |        1799         |       22.95%       |
+|    **moribund**    |        4        |         421         |       5.37%        |
+| **nearly extinct** |        5        |         300         |       3.83%        |
+|    **extinct**     |        6        |         984         |       12.55%       |
+|     **total:**     |                 |        7839         |                    |
+
 ### Supplementary Data
 
 - World Bank Group Data
@@ -136,11 +118,26 @@ languages <-
 
       - Populating change
 
+#### Import & Clean
+
 ```{r supplemental-data}
 
-# Gross domestic product
+# Gross domestic product, reformatted
 gdp <- 
-  readr::read_csv("data/GDP_by_country_time.csv", skip = 4)
+  readr::read_csv("data/GDP_by_country_time.csv", skip = 4) |>
+  select(-`Indicator Name`, -`Indicator Code`) |>
+  rename(country = `Country Name`, country_code = `Country Code`) |>
+  select(where(~!all(is.na(.)))) |>  
+  pivot_longer(
+    cols = -c(country, country_code),
+    names_to = "year",
+    values_to = "gdp_growth_yoy"
+  ) |>
+  mutate(
+    year = as.integer(year),
+    gdp_growth_yoy = as.numeric(gdp_growth_yoy)
+  ) |>
+  filter(!is.na(gdp_growth_yoy))
 
 # United Nations' developing countries list
 dev_countries <- 
@@ -218,8 +215,9 @@ Endangered Status is qualitative by nature but also includes a numeric scale. Ra
 
 1.  Create `master_countries` dataframe
     1.  Begin with `master_languages` dataframe
-    2.  Filter for
-    3.  left_join `families` on `languages.family_id` and `families.id`
+    2.  Filter for shifting, moribund, and endangered AES statuses
+    3.  
+    4.  left_join `families` on `languages.family_id` and `families.id`
 
 #### Variables
 
