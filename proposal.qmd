@@ -252,7 +252,7 @@ Even though I don't have endangered status data over time (see: limitations), I 
 
 #### Expectations
 
-1.  The highest concentration of `shifting` languages will be in countries/areas that have seen the most recent decline in population.
+1.  The highest concentration of `shifting` languages will be in countries/areas that have seen the largest decline in population over the last 20 years.
 2.  `shifting`, `moribund`, and `endangered` languages will roughly follow Pareto's rule in relation to GDP. That is, roughly 80% of the world's least spoken languages will exist in countries/areas that make up less than 20% of the world's GDP.
 
 #### Limitations

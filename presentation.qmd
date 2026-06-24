@@ -38,6 +38,7 @@ pacman::p_load(tidyverse,
                leaflet, 
                mapproj, 
                geofacet, 
+               geosphere,
                glue,
                splitstackshape,
                countrycode
@@ -65,6 +66,7 @@ knitr::opts_chunk$set(
 
 ```{r}
 #| label: load-primary-data
+#| message: False
 
 # Download raw data and filter to endangered status
 endangered_status <- 
@@ -94,13 +96,9 @@ languages <-
   dplyr::filter(Level == "language") |> 
   dplyr::select(ID, Name, Macroarea, Latitude, Longitude, ISO639P3code, Countries, Is_Isolate, Family_ID) |> 
   dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
-
-write_csv(languages, paste0("data/languages.csv"))
 ```
 
-### 
-
-## Prepare Data
+### Prepare Data
 
 ```{r}
 #| label: q1-wrangling
@@ -119,8 +117,13 @@ master_languages <- left_join(
   )
 
 cat("master_languages dimensions: ", dim(master_languages), "\n")
+```
 
-# Calculate custom global reach metric
+### Calculate Custom Global Reach Metrics
+
+```{r}
+#| label: calculate-custom-metrics
+#| message: False
 
 
 
@@ -177,7 +180,7 @@ pop <-
     Sex == "Both sexes"
          ) |>
   select("IndicatorName", "Location", "Iso2", "Iso3", "Time", "Value") |>
-  rename(year = "Time", country = "Location") |>
+  rename(year = "Time", country = "Location", country_code = "Iso2") |>
   select(where(~!all(is.na(.)))) |> 
   pivot_wider(
     names_from = "IndicatorName",
@@ -190,34 +193,55 @@ pop <-
   )
 
 
-# United Nations' developing countries list
+# UN developing countries list
 dev_countries <- 
-  read_csv("data/un_developing_countries_data.csv")
+  read_csv("data/un_developing_countries_data.csv") |>
+  mutate(country_code = countrycode(
+    country,
+    origin = "country.name",                                
+    destination = "iso2c",
+    custom_match = c(
+      "Democratic Rep. of the Congo"      = "CD",
+      "Lao People's Dem. Republic"        = "LA",
+      "Plurinational State of Bolivia"    = "BO",
+      "Micronesia (Federated States of)"  = "FM",
+      "São Tomé and Príncipe"             = "ST",
+      "Timor-Leste"                       = "TL"
+    )
+  ))
+
+glimpse(dev_countries)
 ```
 
 ```{r}
 #| label: q2-wrangling
+#| warning: False
 
 # Create master countries data frame
 end_languages <- master_languages |>
   filter(status_label %in% c("shifting", "moribund", "endangered"))
-
 cat("end_languages dimensions: ", dim(end_languages), "\n")
 
 
-
-end_countries <- cSplit(
+# Create countries data frame
+countries <- cSplit(
   end_languages, 
-  splitCols = "countries", 
-  sep = ";",
-  direction = "long",
-  stripWhite = TRUE,
-) |>
-  left_join(
-    pop,
-    by = c("countries" = "Iso2"),
-    suffix = c("","_pop")
+  splitCols        = "countries", 
+  sep              = ";",
+  direction        = "long",
+  stripWhite       = TRUE,
+) |> 
+  rename(country_code = "countries") |> 
+  left_join(                                          # merge pop dataset
+    pop,         
+    by     = "country_code",
+    suffix = c("_lan","_pop")
+  ) |>
+  left_join(                                          # merge gdp dataset on country & year
+    gdp,         
+    by     = c("country_code", "year"),
+    suffix = c("","_gdp")
   )
 
-cat("end_countries dimensions: ", dim(end_countries), "\n")
+cat("countries dimensions: ", dim(countries), "\n")
 ```
