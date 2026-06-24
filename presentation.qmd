@@ -13,151 +13,211 @@ format:
   
 editor: visual
 execute:
-  echo: false
+  code-fold: true
+  message: false
 ---
+
+# Setup
 
 ```{r}
 #| label: load-packages
-#| include: false
 
-# Load packages here
-pacman::p_load(tidymodels,
-               tidyverse)
+pacman::p_load(tidyverse, 
+               here, 
+               countdown, 
+               tidytuesdayR, 
+               lubridate, 
+               janitor, 
+               showtext, 
+               scico, 
+               DT, 
+               readr, 
+               ggridges, 
+               sf,
+               ggmap, 
+               leaflet, 
+               mapproj, 
+               geofacet, 
+               glue,
+               splitstackshape,
+               countrycode
+)
 
-```
+# theme
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+options(width = 65)
 
-```{r}
-#| label: setup
-#| include: false
-
-# Plot theme
-ggplot2::theme_set(ggplot2::theme_minimal(base_size = 11))
-
-# For better figure resolution
+# figure defaults
 knitr::opts_chunk$set(
-  fig.retina = 3, 
-  dpi = 300, 
-  fig.width = 6, 
-  fig.asp = 0.618 
+  fig.width = 7,
+  fig.asp = 0.618,
+  fig.retina = 3,
+  fig.align = "center",
+  dpi = 300
+)
+```
+
+# Data Wrangling
+
+## Load Data
+
+### Primary
+
+```{r}
+#| label: load-primary-data
+
+# Download raw data and filter to endangered status
+endangered_status <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/values.csv") |> 
+  dplyr::filter(Parameter_ID == "aes") |> 
+  dplyr::select(Language_ID, Value, Code_ID) |> 
+  dplyr::rename(id = Language_ID,
+                status_code = Value,
+                status_label = Code_ID) |> 
+  dplyr::mutate(status_label = stringr::str_replace(stringr::str_remove(status_label, "^aes-"), "_", " "))
+
+# Download language and family data
+fam_lgs <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv")
+
+# Filter and clean language family data
+families <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "family") |> 
+  dplyr::select(ID, Name) |> 
+  dplyr::rename(Family = Name) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+
+# Filter and clean language data
+languages <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "language") |> 
+  dplyr::select(ID, Name, Macroarea, Latitude, Longitude, ISO639P3code, Countries, Is_Isolate, Family_ID) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+
+write_csv(languages, paste0("data/languages.csv"))
+```
+
+### 
+
+## Prepare Data
+
+```{r}
+#| label: q1-wrangling
+#| warning: False
+
+# Create master languages data frame
+master_languages <- left_join(
+  languages,
+  endangered_status,
+  by = "id"
+) |>
+  left_join(
+    families,
+    by = c("family_id" = "id"),
+    suffix = c("", "_name")
   )
+
+cat("master_languages dimensions: ", dim(master_languages), "\n")
+
+# Calculate custom global reach metric
+
+
+
+```
+
+### Load & Prepare External Data
+
+```{r}
+#| label: load-external-data
+#| message: False
+
+# World Bank aggregate codes to exclude from gdp dataset
+wb_aggregates <- c("AFE", "AFW", "ARB", "CEB", "CHI", "CSS", "EAP", "EAR", 
+                   "EAS", "ECA", "ECS", "EMU", "EUU", "FCS", "HIC", "HPC", 
+                   "IBD", "IBT", "IDA", "IDB", "IDX", "INX", "LAC", "LCN", 
+                   "LDC", "LIC", "LMC", "LMY", "LTE", "MEA", "MIC", "MNA", 
+                   "NAC", "OED", "OSS", "PRE", "PSS", "PST", "SAS", "SSA", 
+                   "SSF", "SST", "TEA", "TEC", "TLA", "TMN", "TSA", "TSS", 
+                   "UMC", "WLD", "XKX")
+
+# Gross domestic product, reformatted
+gdp <- 
+  read_csv("data/GDP_by_country_time.csv", skip = 4) |>
+  select(-`Indicator Name`, -`Indicator Code`) |>
+  rename(country = `Country Name`, country_code = `Country Code`) |>
+  filter(!country_code %in% wb_aggregates) |>
+  select(where(~!all(is.na(.)))) |>  
+  pivot_longer(
+    cols = -c(country, country_code),
+    names_to = "year",
+    values_to = "gdp_growth_yoy"
+  ) |>
+  mutate(
+    year = as.integer(year),
+    gdp_growth_yoy = as.numeric(gdp_growth_yoy),
+    country_code = countrycode(
+      country_code, 
+      origin = "iso3c", 
+      destination = "iso2c",
+      custom_match = c("XKX" = "XK")
+      )
+  ) |>
+  filter(!is.na(gdp_growth_yoy)) |>
+  filter(year >= 2004)
+
+
+# Population change and density data by country
+pop <- 
+  read_csv("data/unpopulation_dataportal.csv") |>
+  filter(
+    Time >= 2004, 
+    IndicatorName == "Rate of population change",
+    Variant == "Median",
+    Sex == "Both sexes"
+         ) |>
+  select("IndicatorName", "Location", "Iso2", "Iso3", "Time", "Value") |>
+  rename(year = "Time", country = "Location") |>
+  select(where(~!all(is.na(.)))) |> 
+  pivot_wider(
+    names_from = "IndicatorName",
+    values_from = "Value"
+  ) |>
+  rename(pop_change_yoy = "Rate of population change") |>
+  mutate(
+    year = as.integer(year),
+    pop_change_yoy = as.numeric(pop_change_yoy)
+  )
+
+
+# United Nations' developing countries list
+dev_countries <- 
+  read_csv("data/un_developing_countries_data.csv")
 ```
 
 ```{r}
-#| label: load-data
-#| include: false
-# Load data here
-data(mtcars)
-mtcars$speed <- mtcars$hp / mtcars$wt
+#| label: q2-wrangling
 
-data("penguins")
+# Create master countries data frame
+end_languages <- master_languages |>
+  filter(status_label %in% c("shifting", "moribund", "endangered"))
+
+cat("end_languages dimensions: ", dim(end_languages), "\n")
+
+
+
+end_countries <- cSplit(
+  end_languages, 
+  splitCols = "countries", 
+  sep = ";",
+  direction = "long",
+  stripWhite = TRUE,
+) |>
+  left_join(
+    pop,
+    by = c("countries" = "Iso2"),
+    suffix = c("","_pop")
+  )
+
+cat("end_countries dimensions: ", dim(end_countries), "\n")
 ```
-
-# Using Quarto for presentations
-
-## Quarto
-
-- The presentation is created using the Quarto CLI
-
-- `##` sets the start of a new slide
-
-## Layouts
-
-You can use plain text
-
-::::: columns
-::: {.column width="40%"}
-- or bullet points[^1]
-:::
-
-::: {.column width="60%"}
-or in two columns
-:::
-:::::
-
-[^1]: And add footnotes
-
-- like
-
-- this
-
-## Code
-
-```{r, echo=FALSE}
-model <- lm(mpg ~ speed, data = mtcars) 
-
-model |> tidy()
-
-model |> glance()
-
-```
-
-## Plots
-
-```{r}
-penguins |>
-  mutate(species = ifelse(species == "Adelie", "Adelie", "Other")) |>
-  ggplot(aes(x = flipper_length_mm, y = body_mass_g, color = species)) +
-  geom_point()
-```
-
-## Plot and text
-
-::::: columns
-::: {.column width="50%"}
-- Some text
-
-- goes here
-:::
-
-::: {.column width="50%"}
-```{r, warning=FALSE, fig.width=5.5}
-penguins |>
-  ggplot(aes(x = bill_length_mm, y = species, color = species)) +
-  geom_boxplot(linewidth = 0.75,
-               outlier.size = 2.5) +
-  theme_minimal(base_size = 15) +
-  theme(legend.key.size = unit(0.8, "cm"))
-```
-:::
-:::::
-
-# A new section...
-
-## Tables
-
-If you want to generate a table, make sure it is in the HTML format (instead of Markdown or other formats), e.g.,
-
-```{r}
-penguins |> 
-  head() |>
-  kableExtra::kable() |>
-  kableExtra::kable_styling()
-```
-
-## Images
-
-![Image credit: Danielle Navarro, Percolate.](images/watercolour_sys02_img34_teacup-ocean.png){fig-align="center" width="500"}
-
-## Math Expressions {.smaller}
-
-You can write LaTeX math expressions inside a pair of dollar signs, e.g. \$\\alpha+\\beta\$ renders $\alpha + \beta$. You can use the display style with double dollar signs:
-
-```         
-$$\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i$$
-```
-
-$$\bar{X}=\frac{1}{n}\sum_{i=1}^nX_i$$
-
-Limitations:
-
-1.  The source code of a LaTeX math expression must be in one line, unless it is inside a pair of double dollar signs, in which case the starting `$$` must appear in the very beginning of a line, followed immediately by a non-space character, and the ending `$$` must be at the end of a line, led by a non-space character;
-
-2.  There should not be spaces after the opening `$` or before the closing `$`.
-
-# Wrap up
-
-## Feeling adventurous?
-
-- You are welcomed to use the default styling of the slides. In fact, that's what I expect majority of you will do. You will differentiate yourself with the content of your presentation.
-
-- But some of you might want to play around with slide styling. Some solutions for this can be found at https://quarto.org/docs/presentations/revealjs.

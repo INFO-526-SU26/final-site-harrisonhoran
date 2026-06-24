@@ -26,9 +26,24 @@ execute:
 if (!require("pacman"))
   install.packages("pacman")
 
-pacman::p_load(tidyverse, here, countdown, tidytuesdayR, lubridate, 
-               janitor, showtext, scico, DT, readr, ggridges, sf,
-               ggmap, leaflet, mapproj, geofacet, glue)
+pacman::p_load(tidyverse, 
+               here, 
+               countdown, 
+               tidytuesdayR, 
+               lubridate, 
+               janitor, 
+               showtext, 
+               scico, 
+               DT, 
+               readr, 
+               ggridges, 
+               sf,
+               ggmap, 
+               leaflet, 
+               mapproj, 
+               geofacet, 
+               glue
+               )
 
 # theme
 ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
@@ -216,13 +231,12 @@ Endangered Status is qualitative by nature but also includes a numeric scale. Ra
 1.  Create `master_countries` dataframe
     1.  Begin with `master_languages` dataframe
     2.  Filter for `shifting`, `moribund`, and `endangered` AES statuses
-    3.  
-    4.  left_join `families` on `languages.family_id` and `families.id`
+    3.  Filter for years \>= 2005 for GDP and Population data
 
 #### Variables
 
 | **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
-|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
+|:----------:|:-------------------------:|:----------------------:|:-------------------------:|:--------------------------------------------:|:-------------------------------------:|
 | 1 | Language | Categorical | **`languages`** | Individual language name | Both |
 | 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
 | 4 | Latitude / Longitude | Numerical | **`languages`** | Geographic coordinates for map placement | Both |
@@ -248,8 +262,8 @@ As mentioned, I wasn't able to find past/trending endangered status data, only t
 ### Project Timeline
 
 |  Week  |              Deliverable               |   Deadline    |   Status    |
-|:----------------:|:----------------:|:----------------:|:----------------:|
-| Week 1 |        Proposal + Peer Reviews         | June 12, 2026 | In Progress |
-| Week 2 |       Data Wrangling + Mutation        | June 19, 2026 | In Progress |
-| Week 3 |     Visualizations + Begin Writeup     | June 26, 2026 | Not Started |
+|:--------------------:|:-----------------------------------------------------:|:----------------------------------------:|:----------------------------------------------------------------:|
+| Week 1 |        Proposal + Peer Reviews         | June 17, 2026 |  Complete   |
+| Week 2 |       Data Wrangling + Mutation        | June 25, 2026 | In Progress |
+| Week 3 |     Visualizations + Begin Writeup     | July 1, 2026  | Not Started |
 | Week 4 | Complete Writeup + Record Presentation | July 3, 2026  | Not Started |

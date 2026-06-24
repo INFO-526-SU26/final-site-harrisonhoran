@@ -7,7 +7,7 @@ Final Project repo for INFO 526 - Summer 2026.
 ### **`endangered_status.csv`**
 
 | **Variable** | **Class** | **Description**                                    |
-|----------------|----------------|-----------------------------------------|
+|--------------|-----------|----------------------------------------------------|
 | id           | character | Unique identifier for language                     |
 | status_code  | character | Code of the agglomerated endangerment status (1–6) |
 | status_label | character | Descriptive label of endangerment category         |
@@ -22,7 +22,7 @@ Final Project repo for INFO 526 - Summer 2026.
 ### **`languages.csv`**
 
 | **Variable** | **Class** | **Description** |
-|------------------------|------------------------|------------------------|
+|----|----|----|
 | id | character | Unique identifier for language |
 | name | character | Language name |
 | macroarea | character | General geographic area in which the language is found |
@@ -36,7 +36,7 @@ Final Project repo for INFO 526 - Summer 2026.
 ### **`fam_lgs.csv`**
 
 | **Variable** | **Class** | **Description** |
-|:-----------------------|:-----------------------|:-----------------------|
+|:---|:---|:---|
 | ID | character | Unique identifier for language |
 | Name | character | Language name |
 | Macroarea | character | General geographic area in which the language is found |

@@ -8,10 +8,10 @@ website:
       - icon: github
         href: https://github.com/INFO-526-SU26/final-site-harrisonhoran
     left:
-      - text: Project
-        href: index.qmd
       - text: Proposal
         href: proposal.qmd
+      - text: Project
+        href: index.qmd
       - text: Presentation
         href: presentation.qmd
       - text: About
