@@ -42,7 +42,7 @@ pacman::p_load(tidyverse,
                glue,
                splitstackshape,
                countrycode
-)
+               )
 
 # theme
 ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
@@ -58,11 +58,17 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Data Wrangling
+# Question 1 - Global Language Patterns
 
-## Load Data
+1.  What geographic patterns exist for endangered languages around the world?
 
-### Primary
+## Part 1 - Endangered vs. Isolate Languages
+
+What relationship exists between a language's isolate status and its endangered status?
+
+### Data Wrangling
+
+#### Load Primary Data
 
 ```{r}
 #| label: load-primary-data
@@ -98,7 +104,7 @@ languages <-
   dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
 ```
 
-### Prepare Data
+#### Prepare Data
 
 ```{r}
 #| label: q1-wrangling
@@ -112,12 +118,50 @@ master_languages <- left_join(
 ) |>
   left_join(
     families,
-    by = c("family_id" = "id"),
+    by     = c("family_id" = "id"),
     suffix = c("", "_name")
+  ) |>
+  filter(
+    if_all(c(
+      latitude, longitude, countries, status_code, status_label
+      ), ~ !is.na(.x))
+    ) |>
+  mutate(status_label = factor(status_label, levels = c(
+    "not endangered", "threatened", "shifting", 
+    "moribund", "nearly extinct", "extinct"
   )
+  ))
 
 cat("master_languages dimensions: ", dim(master_languages), "\n")
 ```
+
+### Plotting
+
+```{r}
+
+ggplot(master_languages, aes(
+  x = status_label, 
+  fill = is_isolate
+  )) + 
+  geom_bar() + 
+  labs(
+    title = "Count of Isolate Languages by Endangered Status",
+    subtitle = "",
+    x = "Endangered Status Designation",
+    y = "Count of Languages",
+    fill = "Is Isolate*",
+    caption = "*Isolate = Language not belonging to a broader family of languages"
+  ) +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    plot.caption = element_text(hjust = 0)
+  )
+```
+
+### Analysis & Discussion
+
+Which language families span the widest geographic range?
 
 ### Calculate Custom Global Reach Metrics
 
@@ -125,8 +169,48 @@ cat("master_languages dimensions: ", dim(master_languages), "\n")
 #| label: calculate-custom-metrics
 #| message: False
 
+# --- Option 1: Max Pairwise Haversine Distance ---
+global_reach_haversine <- function(lons, lats) {
+  coords <- cbind(lons, lats)
+  if (nrow(coords) < 2) return(NA_real_)
+  
+  # distm returns a matrix of pairwise distances in meters
+  dist_matrix <- geosphere::distm(coords, fun = distHaversine)
+  max(dist_matrix, na.rm = TRUE) / 1000  # return in km
+}
+
+# --- Option 2: Bounding Box Area (simple, fast) ---
+global_reach_bbox <- function(lons, lats) {
+  lat_range <- diff(range(lats, na.rm = TRUE))
+  lon_range <- diff(range(lons, na.rm = TRUE))
+  lat_range * lon_range  # in decimal degrees²
+}
+
+# --- Option 3: Convex Hull Area ---
+library(sf)
+global_reach_hull <- function(lons, lats) {
+  pts <- st_as_sf(
+    data.frame(lon = lons, lat = lats),
+    coords = c("lon", "lat"),
+    crs = 4326
+  )
+  hull <- st_convex_hull(st_union(pts))
+  # Area in m², convert to km²
+  st_area(st_transform(hull, crs = 3857)) / 1e6
+}
 
 
+reach_by_language <- master_languages |>
+  group_by(name) |>
+  summarise(
+    reach_km         = global_reach_haversine(longitude, latitude),
+    reach_bbox_deg2  = global_reach_bbox(longitude, latitude),
+    reach_hull       = global_reach_hull(longitude, latitude),
+    .groups = "drop"
+  ) |>
+  arrange(desc(reach_km))
+
+reach_by_language
 ```
 
 ### Load & Prepare External Data
