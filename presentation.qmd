@@ -60,11 +60,29 @@ knitr::opts_chunk$set(
 
 # Question 1 - Global Language Patterns
 
-1.  What geographic patterns exist for endangered languages around the world?
+What geographic patterns exist for endangered languages around the world?
 
 ## Part 1 - Endangered vs. Isolate Languages
 
 What relationship exists between a language's isolate status and its endangered status?
+
+##### What is a language isolate?
+
+Per [Wikipedia](https://en.wikipedia.org/wiki/Language_isolate), a **language isolate**, sometimes called an **isolated language**, is a language that has no demonstrable genealogical relationship with any other language. That is, an isolate is a language family that only contains one member.
+
+##### How are we defining 'endangered' languages?
+
+The endangered statuses of languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), comes from [GlottoScope](https://glottolog.org/langdoc/status), which is a collection of global linguists dedicated to tracking endangered languages. The endangered statuses are as follows:
+
+|   **AES status**   | AES Status Code | **\# of languages** | **% of languages** |
+|:----------------:|:----------------:|:-----------------:|:----------------:|
+| **Not Endangered** |        1        |        2770         |       35.34%       |
+|   **Threatened**   |        2        |        1565         |       19.96%       |
+|    **Shifting**    |        3        |        1799         |       22.95%       |
+|    **Moribund**    |        4        |         421         |       5.37%        |
+| **Nearly Extinct** |        5        |         300         |       3.83%        |
+|    **Extinct**     |        6        |         984         |       12.55%       |
+|     **total:**     |                 |        7839         |                    |
 
 ### Data Wrangling
 
@@ -107,7 +125,7 @@ languages <-
 #### Prepare Data
 
 ```{r}
-#| label: q1-wrangling
+#| label: q1p1-wrangling
 #| warning: False
 
 # Create master languages data frame
@@ -126,18 +144,20 @@ master_languages <- left_join(
       latitude, longitude, countries, status_code, status_label
       ), ~ !is.na(.x))
     ) |>
-  mutate(status_label = factor(status_label, levels = c(
-    "not endangered", "threatened", "shifting", 
-    "moribund", "nearly extinct", "extinct"
+  mutate(
+    status_label = str_to_title(status_label),
+    status_label = factor(status_label, levels = c(
+    "Not Endangered", "Threatened", "Shifting", 
+    "Moribund", "Nearly Extinct", "Extinct"
   )
   ))
-
-cat("master_languages dimensions: ", dim(master_languages), "\n")
 ```
 
-### Plotting
+### Visualization
 
 ```{r}
+#| label: q1p1-plotting
+
 
 ggplot(master_languages, aes(
   x = status_label, 
@@ -149,21 +169,34 @@ ggplot(master_languages, aes(
     subtitle = "",
     x = "Endangered Status Designation",
     y = "Count of Languages",
-    fill = "Is Isolate*",
-    caption = "*Isolate = Language not belonging to a broader family of languages"
+    fill = "Is Isolate",
+    caption = "Source: "
   ) +
   theme_minimal() + 
   theme(
     plot.title = element_text(hjust = 0.5, size = 14),
-    plot.caption = element_text(hjust = 0)
+    plot.caption = element_text(hjust = 0),
+    axis.text.x = element_text(angle = 20)
   )
 ```
 
 ### Analysis & Discussion
 
-Which language families span the widest geographic range?
+## Part 2 - Largest Geographic Reach
 
-### Calculate Custom Global Reach Metrics
+Which language families span the largest geographic range?
+
+Answering this question is only possible with a functional definition of 'largest geographic range'. I considered three different options:
+
+1.  Haversine Distance
+2.  Area Covered by Countries
+3.  Convex Hull
+
+### Data Wrangling
+
+#### 
+
+#### Calculate Custom Global Reach Metrics
 
 ```{r}
 #| label: calculate-custom-metrics
@@ -179,7 +212,7 @@ global_reach_haversine <- function(lons, lats) {
   max(dist_matrix, na.rm = TRUE) / 1000  # return in km
 }
 
-# --- Option 2: Bounding Box Area (simple, fast) ---
+# --- Option 2: Bounding Box Area ---
 global_reach_bbox <- function(lons, lats) {
   lat_range <- diff(range(lats, na.rm = TRUE))
   lon_range <- diff(range(lons, na.rm = TRUE))
@@ -200,8 +233,13 @@ global_reach_hull <- function(lons, lats) {
 }
 
 
-reach_by_language <- master_languages |>
-  group_by(name) |>
+family_reach <- master_languages |>
+  mutate(family = replace_na(family, "Isolate")) |>
+  group_by(family) |>
+  filter(!family %in% c(
+  "Unattested", "Bookkeeping", "Unclassifiable"            # these aren't actual language families
+#  "Pidgin", "Artificial Language", "Sign Language"        # these are gray area families, but I'm still curious about their reach
+  )) |>
   summarise(
     reach_km         = global_reach_haversine(longitude, latitude),
     reach_bbox_deg2  = global_reach_bbox(longitude, latitude),
@@ -209,11 +247,150 @@ reach_by_language <- master_languages |>
     .groups = "drop"
   ) |>
   arrange(desc(reach_km))
-
-reach_by_language
 ```
 
-### Load & Prepare External Data
+### Visualization
+
+```{r}
+
+# Create world map
+world_map <- 
+  ggplot(map_data("world"), aes(x = long, y = lat, group = group)) +
+  geom_polygon(fill = "gray90", linewidth = 0.3) + 
+  labs(x = NULL, y = NULL) + 
+  theme_bw() + 
+  theme(
+    panel.grid = element_blank()
+  )
+
+world_map +
+  coord_map(
+    projection = "mercator",
+    xlim = c(-180, 180)
+  )
+
+
+```
+
+### Analysis & Discussion
+
+# Question 2 - Socioeconomic vs. Linguistic Change
+
+1.  What relationship exists between shifting/endangered languages and:
+    1.  Population change over the last 20 years
+    2.  Change in GDP over the last 20 years
+
+## Part 1 - Shifting Languages vs. Population Change
+
+What relationship exists between shifting/endangered languages and the average population change of the countries in which it's spoken (last 20 years).
+
+### Data Wrangling
+
+#### Load Primary Data
+
+```{r}
+#| label: load-primary-data
+#| message: False
+
+# Download raw data and filter to endangered status
+endangered_status <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/values.csv") |> 
+  dplyr::filter(Parameter_ID == "aes") |> 
+  dplyr::select(Language_ID, Value, Code_ID) |> 
+  dplyr::rename(id = Language_ID,
+                status_code = Value,
+                status_label = Code_ID) |> 
+  dplyr::mutate(status_label = stringr::str_replace(stringr::str_remove(status_label, "^aes-"), "_", " "))
+
+# Download language and family data
+fam_lgs <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv")
+
+# Filter and clean language family data
+families <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "family") |> 
+  dplyr::select(ID, Name) |> 
+  dplyr::rename(Family = Name) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+
+# Filter and clean language data
+languages <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "language") |> 
+  dplyr::select(ID, Name, Macroarea, Latitude, Longitude, ISO639P3code, Countries, Is_Isolate, Family_ID) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+```
+
+#### Prepare Data
+
+```{r}
+#| label: q1p1-wrangling
+#| warning: False
+
+# Create master languages data frame
+master_languages <- left_join(
+  languages,
+  endangered_status,
+  by = "id"
+) |>
+  left_join(
+    families,
+    by     = c("family_id" = "id"),
+    suffix = c("", "_name")
+  ) |>
+  filter(
+    if_all(c(
+      latitude, longitude, countries, status_code, status_label
+      ), ~ !is.na(.x))
+    ) |>
+  mutate(
+    status_label = str_to_title(status_label),
+    status_label = factor(status_label, levels = c(
+    "Not Endangered", "Threatened", "Shifting", 
+    "Moribund", "Nearly Extinct", "Extinct"
+  )
+  ))
+```
+
+### Visualization
+
+```{r}
+#| label: q1p1-plotting
+
+
+ggplot(master_languages, aes(
+  x = status_label, 
+  fill = is_isolate
+  )) + 
+  geom_bar() + 
+  labs(
+    title = "Count of Isolate Languages by Endangered Status",
+    subtitle = "",
+    x = "Endangered Status Designation",
+    y = "Count of Languages",
+    fill = "Is Isolate*",
+    caption = "*Isolate = Language not belonging to a broader family of languages"
+  ) +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    plot.caption = element_text(hjust = 0),
+    axis.text.x = element_text(angle = 20)
+  )
+```
+
+### Analysis & Discussion
+
+## Part 2 - Shifting Languages vs. GDP Change
+
+What relationship exists between shifting/endangered languages and average GDP change of the countries in which it's spoken (last 20 years).
+
+### Data Wrangling
+
+#### 
+
+#### Load & Prepare External Data
 
 ```{r}
 #| label: load-external-data
@@ -329,3 +506,5 @@ countries <- cSplit(
 
 cat("countries dimensions: ", dim(countries), "\n")
 ```
+
+### Analysis & Discussion
