@@ -104,7 +104,7 @@ There are three primary datasets from TidyTuesday, each of which are derived fro
 The focus of the data are the languages spoken across the world. Primarily where they are spoken (both in terms of macroarea and lat/lon coordinates), and which families they belong to. Beyond that, and maybe the most pointed data, are the endangered statuses of these languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), which is as follows:
 
 |   **AES status**   | AES Status Code | **\# of languages** | **% of languages** |
-|:----------------:|:----------------:|:-----------------:|:----------------:|
+|:------------------:|:---------------:|:-------------------:|:------------------:|
 | **not endangered** |        1        |        2770         |       35.34%       |
 |   **threatened**   |        2        |        1565         |       19.96%       |
 |    **shifting**    |        3        |        1799         |       22.95%       |
@@ -186,7 +186,7 @@ I was a linguistics major in undergrad, so languages are naturally interesting t
 #### Variables
 
 | **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
-|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
+|:--:|:--:|:--:|:--:|:--:|:--:|
 | 1 | Language | Categorical | **`languages`** | Individual language name | Both |
 | 2 | Macroarea | Categorical | **`languages`** | Africa, Americas, Australia, Eurasia, Pacific, South America | Both |
 | 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
@@ -236,7 +236,7 @@ Endangered Status is qualitative by nature but also includes a numeric scale. Ra
 #### Variables
 
 | **\#** | **Variable** | **Type** | **Source** | **Notes** | Used For? |
-|:----------:|:-------------------------:|:----------------------:|:-------------------------:|:--------------------------------------------:|:-------------------------------------:|
+|:--:|:--:|:--:|:--:|:--:|:--:|
 | 1 | Language | Categorical | **`languages`** | Individual language name | Both |
 | 3 | Country | Categorical | **`languages`** | Join key for supplementary datasets | Both |
 | 4 | Latitude / Longitude | Numerical | **`languages`** | Geographic coordinates for map placement | Both |
@@ -262,8 +262,8 @@ As mentioned, I wasn't able to find past/trending endangered status data, only t
 ### Project Timeline
 
 |  Week  |              Deliverable               |   Deadline    |   Status    |
-|:--------------------:|:-----------------------------------------------------:|:----------------------------------------:|:----------------------------------------------------------------:|
+|:------:|:--------------------------------------:|:-------------:|:-----------:|
 | Week 1 |        Proposal + Peer Reviews         | June 17, 2026 |  Complete   |
 | Week 2 |       Data Wrangling + Mutation        | June 25, 2026 | In Progress |
-| Week 3 |     Visualizations + Begin Writeup     | July 1, 2026  | Not Started |
-| Week 4 | Complete Writeup + Record Presentation | July 3, 2026  | Not Started |
+| Week 3 |     Visualizations + Begin Writeup     | July 1, 2026  | In Progress |
+| Week 4 | Complete Writeup + Record Presentation | July 3, 2026  | In Progress |

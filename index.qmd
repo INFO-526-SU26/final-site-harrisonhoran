@@ -1,11 +1,11 @@
 ---
-title: "Project Title"
-subtitle: "INFO 526 - Summer 2024 - Final Project"
+title: "The Languages of the World"
+subtitle: "INFO 526 - Final Project"
 author: 
-  - name: "Team name"
+  - name: "Harrison Horan"
     affiliations:
-      - name: "School of Information, University of Arizona"
-description: "Project description"
+      - name: "College of Information Science, University of Arizona"
+description: "Visualizing the TidyTuesday The Languages of the World dataset, curated from Glottolog 5.2.1, an open-access database in linguistics."
 format:
    html:
     code-tools: true
@@ -14,9 +14,549 @@ format:
 editor: visual
 execute:
   warning: false
-  echo: false
 ---
 
-## Abstract
+## Setup
 
-Add project abstract here.
+```{r}
+#| label: load-packages
+
+pacman::p_load(tidyverse, 
+               here, 
+               countdown, 
+               tidytuesdayR, 
+               lubridate, 
+               janitor, 
+               showtext, 
+               scico, 
+               DT, 
+               readr, 
+               ggridges, 
+               sf,
+               ggmap, 
+               leaflet, 
+               mapproj, 
+               geofacet, 
+               geosphere,
+               glue,
+               splitstackshape,
+               countrycode,
+               rnaturalearth,
+               patchwork,
+               scales
+               )
+
+# theme
+ggplot2::theme_set(ggplot2::theme_minimal(base_size = 14))
+options(width = 65)
+
+# figure defaults
+knitr::opts_chunk$set(
+  fig.width = 9,
+  fig.asp = 0.618,
+  fig.retina = 3,
+  fig.align = "center",
+  dpi = 300
+)
+```
+
+# Question 1 - Global Language Patterns
+
+What geographic patterns exist for endangered languages around the world?
+
+## Part 1 - Endangered vs. Isolate Languages
+
+What relationship exists between a language's isolate status and its endangered status?
+
+##### What is a language isolate?
+
+Per [Wikipedia](https://en.wikipedia.org/wiki/Language_isolate), a **language isolate**, sometimes called an **isolated language**, is a language that has no demonstrable genealogical relationship with any other language. That is, an isolate is a language family that only contains one member.
+
+##### How are we defining 'endangered' languages?
+
+The endangered statuses of languages, based on a six-point scale called the [Agglomerated Endangerment Scale (AES)](https://glottolog.org/langdoc/status), comes from [GlottoScope](https://glottolog.org/langdoc/status), which is a collection of global linguists dedicated to tracking endangered languages. The endangered statuses are as follows:
+
+|   **AES status**   | AES Status Code | **\# of languages** | **% of languages** |
+|:----------------:|:----------------:|:-----------------:|:----------------:|
+| **Not Endangered** |        1        |        2770         |       35.34%       |
+|   **Threatened**   |        2        |        1565         |       19.96%       |
+|    **Shifting**    |        3        |        1799         |       22.95%       |
+|    **Moribund**    |        4        |         421         |       5.37%        |
+| **Nearly Extinct** |        5        |         300         |       3.83%        |
+|    **Extinct**     |        6        |         984         |       12.55%       |
+|     **total:**     |                 |        7839         |                    |
+
+### Data Wrangling
+
+#### Load Primary Data
+
+```{r}
+#| label: load-primary-data
+#| message: False
+
+# Download raw data and filter to endangered status
+endangered_status <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/values.csv") |> 
+  dplyr::filter(Parameter_ID == "aes") |> 
+  dplyr::select(Language_ID, Value, Code_ID) |> 
+  dplyr::rename(id = Language_ID,
+                status_code = Value,
+                status_label = Code_ID) |> 
+  dplyr::mutate(status_label = stringr::str_replace(stringr::str_remove(status_label, "^aes-"), "_", " "))
+
+# Download language and family data
+fam_lgs <- 
+  readr::read_csv("https://raw.githubusercontent.com/glottolog/glottolog-cldf/refs/heads/master/cldf/languages.csv")
+
+# Filter and clean language family data
+families <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "family") |> 
+  dplyr::select(ID, Name) |> 
+  dplyr::rename(Family = Name) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+
+# Filter and clean language data
+languages <- 
+  fam_lgs |> 
+  dplyr::filter(Level == "language") |> 
+  dplyr::select(ID, Name, Macroarea, Latitude, Longitude, ISO639P3code, Countries, Is_Isolate, Family_ID) |> 
+  dplyr::rename_with(stringr::str_to_lower, dplyr::everything())
+```
+
+#### Prepare Data
+
+```{r}
+#| label: q1p1-wrangling
+#| warning: False
+
+# Create master languages data frame
+master_languages <- left_join(
+  languages,
+  endangered_status,
+  by = "id"
+) |>
+  left_join(
+    families,
+    by     = c("family_id" = "id"),
+    suffix = c("", "_name")
+  ) |>
+  filter(
+    if_all(c(
+      latitude, longitude, countries, status_code, status_label
+      ), ~ !is.na(.x))
+    ) |>
+  mutate(
+    status_label = str_to_title(status_label),
+    status_label = factor(status_label, levels = c(
+    "Not Endangered", "Threatened", "Shifting", 
+    "Moribund", "Nearly Extinct", "Extinct")),
+    not_endangered = if_else(
+      status_label == "Not Endangered", "Not Endangered", "Threatened or Worse")
+    )
+```
+
+### Visualization
+
+```{r}
+#| label: q1p1-plotting
+
+
+ggplot(master_languages, aes(
+  x = status_label, 
+  fill = is_isolate
+  )) + 
+  geom_bar() + 
+  labs(
+    title = "Count of Isolate Languages by Endangered Status",
+    subtitle = "",
+    x = "Endangered Status Designation",
+    y = "Count of Languages",
+    fill = "Is Isolate",
+    caption = "Source: "
+  ) +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14),
+    plot.caption = element_text(hjust = 0),
+    axis.text.x = element_text(angle = 20)
+  )
+```
+
+### Analysis & Discussion
+
+## Part 2 - Largest Geographic Reach
+
+Which language families span the largest geographic range?
+
+Answering this question is only possible with a functional definition of 'largest geographic range'. I considered two different options:
+
+1.  Haversine Distance, or essentially a point A to point B line between the two farthest apart speakers
+2.  Bounding Box Area, which takes the min and max of latitude and longitude of speakers and creates a rectangle/area
+
+### Data Wrangling
+
+#### Calculate Custom Global Reach Metrics
+
+```{r}
+#| label: calculate-custom-metrics
+#| message: False
+
+# --- Option 1: Max Pairwise Haversine Distance ---
+global_reach_haversine <- function(lons, lats) {
+  coords <- cbind(lons, lats)
+  if (nrow(coords) < 2) return(NA_real_)
+  
+  # distm returns a matrix of pairwise distances in meters
+  dist_matrix <- geosphere::distm(coords, fun = distHaversine)
+  max(dist_matrix, na.rm = TRUE) / 1000  # return in km
+}
+
+# --- Option 2: Bounding Box Area ---
+global_reach_bbox <- function(lons, lats) {
+  lat_range <- diff(range(lats, na.rm = TRUE))
+  lon_range <- diff(range(lons, na.rm = TRUE))
+  lat_range * lon_range  # in decimal degrees²
+}
+
+
+family_reach <- master_languages |>
+  mutate(family = replace_na(family, "Isolate")) |>
+  group_by(family) |>
+  filter(!family %in% c(
+  "Unattested", "Bookkeeping", "Unclassifiable",
+  "Speech Register", "Pidgin", "Mixed Language"
+  # "Artificial Language", "Sign Language", "Isolate"
+  )) |>
+  summarise(
+    reach_km         = global_reach_haversine(longitude, latitude),
+    reach_bbox_deg2  = global_reach_bbox(longitude, latitude),
+    min_lat          = min(latitude, na.rm = TRUE),
+    max_lat          = max(latitude, na.rm = TRUE),
+    min_lon          = min(longitude, na.rm = TRUE),
+    max_lon          = max(longitude, na.rm = TRUE),
+    bb_asp           = diff(range(latitude, na.rm = TRUE)) / diff(range(longitude, na.rm = TRUE)),
+    .groups = "drop"
+  ) |>
+  arrange(desc(reach_bbox_deg2))
+
+top_10_reach <- family_reach |>
+  slice_head(n = 10)
+```
+
+### Visualization
+
+```{r}
+#| fig-width: 10
+#| fig-height: 16
+
+# Create world map
+world_map <- 
+  ggplot() +
+  geom_polygon(
+    data = map_data("world"), 
+    aes(x = long, y = lat, group = group),
+    fill = "gray90", color = "white", linewidth = 0.1) + 
+  labs(x = NULL, y = NULL) + 
+  coord_map(
+    projection = "mercator",
+    xlim = c(-180, 180),
+    ylim = c(-50, 70)
+  ) +
+  theme_minimal() + 
+  theme(
+    panel.grid   = element_blank(),
+    panel.border = element_blank(),
+    axis.text    = element_blank(),
+    axis.ticks   = element_blank()
+  )
+
+world_map + 
+  geom_rect(
+    data = top_10_reach,
+    aes(xmin  = min_lon, xmax = max_lon, 
+        ymin  = min_lat, ymax = max_lat,
+        color = family, 
+        fill  = after_scale(alpha(color, 0.3))),
+    linewidth = 0.8
+  ) + 
+  geom_hline(yintercept = 0, color = "darkgray", linewidth = 0.5, linetype = "dotted") + 
+  geom_vline(xintercept = 0, color = "darkgray", linewidth = 0.5, linetype = "dotted") + 
+  facet_wrap(~ family, ncol = 2) + 
+  labs(
+    title = "Global Reach of Top 10 Language Families",
+    subtitle = "Total Area of Recorded Speakers",
+    caption = "Source: 'The Languages of the World' TidyTuesday dataset, curated from Glottolog 5.2.1",
+    color = "Family"
+       ) +
+  theme(
+    legend.position = "none",
+    plot.title      = element_text(hjust = 0.5),
+    plot.subtitle   = element_text(hjust = 0.5),
+    panel.spacing   = unit(1, "cm")
+  )
+```
+
+```{r}
+ggplot(top_10_reach, aes(x = reorder(family, reach_km), y = reach_km)) +
+  geom_col(fill = "#3d1a8e") +
+  coord_flip() +
+  labs(
+    title = "Global Reach of Top 10 Language Families",
+    subtitle = "By Longest Distance (km) Between Recorded Speakers",
+    caption = "Source: 'The Languages of the World' TidyTuesday dataset, curated from Glottolog 5.2.1",
+    x = NULL,
+    y = "Haversine Line Distance (km)"
+  ) +
+  scale_y_continuous(labels = comma) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5),
+  )
+```
+
+### Analysis & Discussion
+
+It's unconventional, and maybe crude, to use a rectangular area (calculated from extremes) to measure the global reach of a language family.
+
+#### Challenges & Solutions
+
+I think the biggest challenge with this visualization is semantic: language family designations don't really mean much to us. While most Americans might guess that Indo-European is 'what we speak', I don't think languages' families are common knowledge.
+
+# Question 2 - Socioeconomic vs. Linguistic Change
+
+1.  What relationship exists between shifting/endangered languages and:
+    1.  Population change over the last 20 years
+    2.  Change in GDP over the last 20 years
+
+## Part 1 - Shifting Languages vs. Population Change
+
+What relationship exists between shifting/endangered languages and the average population change of the countries in which it's spoken (last 20 years).
+
+### Data Wrangling
+
+#### Load External Source Data
+
+```{r}
+#| label: load-primary-data
+#| message: False
+
+# World Bank aggregate codes to exclude from gdp dataset
+wb_aggregates <- c("AFE", "AFW", "ARB", "CEB", "CHI", "CSS", "EAP", "EAR", 
+                   "EAS", "ECA", "ECS", "EMU", "EUU", "FCS", "HIC", "HPC", 
+                   "IBD", "IBT", "IDA", "IDB", "IDX", "INX", "LAC", "LCN", 
+                   "LDC", "LIC", "LMC", "LMY", "LTE", "MEA", "MIC", "MNA", 
+                   "NAC", "OED", "OSS", "PRE", "PSS", "PST", "SAS", "SSA", 
+                   "SSF", "SST", "TEA", "TEC", "TLA", "TMN", "TSA", "TSS", 
+                   "UMC", "WLD", "XKX")
+
+# Gross domestic product, reformatted
+gdp <- 
+  read_csv("data/GDP_by_country_time.csv", skip = 4) |>
+  select(-`Indicator Name`, -`Indicator Code`) |>
+  rename(country = `Country Name`, country_code = `Country Code`) |>
+  filter(!country_code %in% wb_aggregates) |>
+  select(where(~!all(is.na(.)))) |>  
+  pivot_longer(
+    cols = -c(country, country_code),
+    names_to = "year",
+    values_to = "gdp_growth_yoy"
+  ) |>
+  mutate(
+    year = as.integer(year),
+    gdp_growth_yoy = as.numeric(gdp_growth_yoy),
+    country_code = countrycode(
+      country_code, 
+      origin = "iso3c", 
+      destination = "iso2c",
+      custom_match = c("XKX" = "XK")
+    )
+  ) |>
+  filter(!is.na(gdp_growth_yoy)) |>
+  filter(year >= 2004) |>
+  arrange(country)
+
+# Population change and density data by country
+pop <- 
+  read_csv("data/unpopulation_dataportal.csv") |>
+  filter(
+    Time >= 2004, 
+    IndicatorName == "Rate of population change",
+    Variant == "Median",
+    Sex == "Both sexes"
+  ) |>
+  select("IndicatorName", "Location", "Iso2", "Iso3", "Time", "Value") |>
+  rename(year = "Time", country = "Location", country_code = "Iso2") |>
+  select(where(~!all(is.na(.)))) |> 
+  pivot_wider(
+    names_from = "IndicatorName",
+    values_from = "Value"
+  ) |>
+  rename(pop_change_yoy = "Rate of population change") |>
+  mutate(
+    year = as.integer(year),
+    pop_change_yoy = as.numeric(pop_change_yoy)
+  )
+
+# UN developing countries list
+dev_countries <- 
+  read_csv("data/un_developing_countries_data.csv") |>
+  mutate(country_code = countrycode(
+    country,
+    origin = "country.name",                                
+    destination = "iso2c",
+    custom_match = c(
+      "Democratic Rep. of the Congo"      = "CD",
+      "Lao People's Dem. Republic"        = "LA",
+      "Plurinational State of Bolivia"    = "BO",
+      "Micronesia (Federated States of)"  = "FM",
+      "São Tomé and Príncipe"             = "ST",
+      "Timor-Leste"                       = "TL"
+    )
+  ))
+```
+
+#### Prepare Data
+
+```{r}
+#| label: q2p1-wrangling
+#| warning: False
+
+# Separating delimited countries & joining w/ custom datasets
+lang_country_change <- master_languages |>
+  filter(!is.na(countries)) |>
+  select(-iso639p3code) |>
+  separate_rows(countries, sep = ";") |>  # one row per country per language
+  rename(country_code = "countries") |>
+  mutate(
+    status_code = as.integer(status_code)
+  ) |>
+  left_join(
+    gdp,
+    by = "country_code"
+  ) |>
+  left_join(
+    pop |> select(-country, -Iso3),
+    by = c("country_code", "year")
+  )
+
+# Separating delimited countries & joining w/ custom datasets
+master_countries <- lang_country_change |>
+  group_by(country, country_code, status_label, status_code) |>
+  summarise(
+    n_languages = n_distinct(id), 
+    avg_annual_gdp_change_20_year = mean(gdp_growth_yoy, na.rm = TRUE),
+    avg_annual_pop_change_20_year = mean(pop_change_yoy, na.rm = TRUE),
+    .groups = "drop"
+    ) |>
+  group_by(country, country_code) |>
+  mutate(
+    total_languages   = sum(n_languages),
+    status_proportion = n_languages / total_languages,
+    avg_status_score  = mean(status_code)
+  )
+
+# Iteration of master countries with only shifting languages
+master_countries_shifting <- master_countries |>
+  filter(status_label == "Shifting")
+```
+
+### Visualization
+
+```{r}
+#| label: q2p1-plotting
+#| warning: False
+
+ggplot(master_countries, aes(x = avg_annual_gdp_change_20_year, 
+                             y = status_label, 
+                             color = status_label)) +
+  geom_violin() +
+  geom_jitter(width = 0.1, alpha = 0.3, size = 1) + 
+  labs(
+    title = "Distribution of Languages by Endangered Status and Language Country's 20 Year Avg. Annual Change in GDP"
+  ) + 
+  theme_minimal() + 
+  theme(
+    
+  )
+
+```
+
+### Analysis & Discussion
+
+## Part 2 - Shifting Languages vs. Shifting GDP
+
+What relationship exists between shifting/endangered languages and average GDP change of the countries in which it's spoken (last 20 years).
+
+### Prepare Data
+
+```{r q2p2-data-wrangling}
+#| message: False
+#| warning: False
+
+country_economics <- master_countries |>
+  distinct(country, country_code, 
+           avg_annual_gdp_change_20_year, 
+           avg_annual_pop_change_20_year
+           )
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+map_data_status <- world |>
+  left_join(master_countries_shifting, by = c("iso_a2" = "country_code"))
+
+map_data_econ <- world |>
+  left_join(country_economics, by = c("iso_a2" = "country_code"))
+
+map_dev_countries <- world |>
+  left_join(dev_countries, by = c("iso_a2" = "country_code")) |>
+  filter(iso_a2 %in% dev_countries$country_code)
+```
+
+### Visualization
+
+```{r q2p2-plotting}
+
+p1 <- ggplot(map_data_status) +
+  geom_sf(aes(fill = status_proportion), color = "white", linewidth = 0.1) +
+  geom_sf(data = map_dev_countries, fill = NA, color = "white", linewidth = 0.3) +
+  coord_sf(ylim = c(-50, 85), expand = FALSE) +
+  scale_fill_viridis_c(option = "rocket", direction = -1, na.value = "grey90") +
+  labs(title = "Shifting Languages", fill = NULL) +
+  theme_minimal()
+
+p2 <- ggplot(map_data_econ) +
+  geom_sf(aes(fill = avg_annual_gdp_change_20_year), color = "white", linewidth = 0.1) +
+  coord_sf(ylim = c(-50, 85), expand = FALSE) +
+  scale_fill_viridis_c(option = "mako", direction = -1, na.value = "grey90") +
+  labs(title = "Shifting Economies", fill = NULL) +
+  theme_minimal()
+
+p3 <- ggplot(map_data_econ) +
+  geom_sf(aes(fill = avg_annual_pop_change_20_year), color = "white", linewidth = 0.1) +
+  coord_sf(ylim = c(-50, 85), expand = FALSE) +
+  scale_fill_viridis_c(option = "mako", direction = -1, na.value = "grey90") +
+  labs(title = "Shifting Populations", fill = NULL) +
+  theme_minimal()
+
+p4 <- ggplot(map_data_status) +
+  geom_sf(aes(fill = status_proportion), color = "white", linewidth = 0.1) +
+  geom_sf(data = map_dev_countries, fill = NA, color = "green", linewidth = 0.5) +
+  coord_sf(ylim = c(-50, 85), expand = FALSE) +
+  scale_fill_viridis_c(option = "rocket", direction = -1, na.value = "grey90") +
+  labs(
+    title = "Shifting Languages", 
+    fill = "Proportion of Languages with\nan Endangered Status of 'Shifting'"
+    ) +
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5),
+   # legend.position = "inside"
+  )
+
+p4
+```
+
+### Analysis & Discussion
