@@ -168,7 +168,6 @@ master_languages <- left_join(
 ```{r}
 #| label: q1p1-plotting
 
-
 ggplot(master_languages, aes(
   x = status_label, 
   fill = is_isolate
@@ -255,6 +254,7 @@ top_10_reach <- family_reach |>
 ### Visualization
 
 ```{r}
+#| label: global-reach-faceted
 #| fig-width: 10
 #| fig-height: 16
 
@@ -491,6 +491,8 @@ map_ldc_countries <- world |>
 
 ### Visualization
 
+My plan for visualizing this story was to use repetition as a tool. I wanted to begin by introducing a rather obscure metric, shifting language density, as its own plot to familiar the viewer. Then, as I move through the different socioeconomic elements of the question, I wanted to keep the same map and format but change the color palette so the viewer understands that the metric has changed. Beyond that, I'm reprinting the initial map because I think it's easier to view the patterns of each metric side by side.
+
 #### Shifting Language Density
 
 The first step is to highlight countries with the highest concentration of shifting languages. This is calculated per country as the percent of total languages spoken that have an endangered status of `Shifting`.
@@ -514,12 +516,12 @@ p1 <- ggplot(map_data_status) +
       "Sweden"
       )), 
     aes(label = name, geometry = geometry),
-    stat = "sf_coordinates",
-    size = 4,
+    stat               = "sf_coordinates",
+    size               = 4,
     min.segment.length = 0,
-    nudge_x = c(-15, -15, -20, -10, -5),
-    nudge_y = c(-14, 8, 0, -10, -6),
-    segment.color = "grey40",
+    nudge_x            = c(-15, -15, -20, -10, -5),
+    nudge_y            = c(-14, 8, 0, -10, -6),
+    segment.color      = "grey40",
   ) +
   scale_fill_viridis_c(
     option    = "rocket", 
@@ -549,6 +551,12 @@ p1 <- ggplot(map_data_status) +
   )
 p1
 ```
+
+##### Anti-Patterns
+
+What stands out most to me about this visual is just how few patterns there are in shifting language density around the world. The only thing that really stands out is that Central and South America as a whole seem to have more consistently shifting languages than the rest of the world.
+
+But, aside from South America, I wanted to highlight some of the densest countries of shifting languages. These five countries are shockingly diverse, differing in size, population, development, and even continent.
 
 #### Shifting Languages vs. Shifting Economy
 
@@ -589,8 +597,8 @@ ggplot(master_countries, aes(x = status_label,
 #| fig-asp: .67
 #| warning: False
 
-# Patch 1: shifting languages
-p1 <- ggplot(map_data_status) +
+# Patch 1b: removing country labels
+p1b <- ggplot(map_data_status) +
   geom_sf(aes(fill = status_proportion), color = "white", linewidth = 0.1) +
   coord_sf(ylim = c(-60, 85), expand = FALSE) +
   scale_fill_viridis_c(
@@ -600,17 +608,24 @@ p1 <- ggplot(map_data_status) +
     labels    = percent_format(accuracy = 1),
   ) +
   labs(
-    title    = "Global 'Shifting' Language Concentration", 
+    title    = "Global 'Shifting' Language Density", 
     subtitle = "By Percent of Countries' Total Languages",
-    fill     = "Percent 'Shifting'"
+    fill     = "'Shifting' Language Density",
+    x        = NULL,
+    y        = NULL
   ) +
   theme_minimal() + 
   theme(
-    plot.title            = element_text(hjust = 0.5, size = 15),
-    plot.subtitle         = element_text(hjust = 0.5, size = 12),
-    legend.box.background = element_rect(
-      fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8)
+    plot.title             = element_text(hjust = 0.5, size = 15),
+    plot.subtitle          = element_text(hjust = 0.5, size = 12),
+    legend.box.background  = element_rect(fill = "white", color = "black", 
+                                          linewidth = 0.35, alpha = 0.8),
+    legend.position        = "inside",
+    legend.position.inside = c(.15, .18),
+    legend.direction       = "horizontal",
+    legend.title.position  = "top",
+    legend.title           = element_text(hjust = 0.5, size = 8),
+    legend.text            = element_text(hjust = 0.5, size = 7)
   )
 
 # Patch 2: gdp data
@@ -624,7 +639,7 @@ p2 <- ggplot(map_data_econ) +
     labels = percent_format(accuracy = 1, scale = 1)
     ) +
   labs(
-    title    = "Shifting Gross Domestic Product (GDP)", 
+    title    = "Shifting Economies", 
     subtitle = "Average Annual Change in GDP (2004 - 2024)",
     fill     = "Avg. Annual GDP Change"
   ) +
@@ -635,57 +650,14 @@ p2 <- ggplot(map_data_econ) +
     legend.box.background = element_rect(
       fill = "white", color = "black", 
       linewidth = 0.35, alpha = 0.8),
-    legend.direction = "horizontal",
-    legend.title.position = "top",
-    legend.title = element_text(size = 8, align = "center")
+    legend.position        = "inside",
+    legend.position.inside = c(.15, .18),
+    legend.direction       = "horizontal",
+    legend.title.position  = "top",
+    legend.title           = element_text(hjust = 0.5, size = 8),
+    legend.text            = element_text(hjust = 0.5, size = 7)
   )
-
-# Patch 3: population data
-p3 <- ggplot(map_data_econ) +
-  geom_sf(aes(fill = avg_annual_pop_change_20_year), color = "white", linewidth = 0.1) +
-  coord_sf(ylim = c(-60, 85), expand = FALSE) +
-  scale_fill_viridis_c(option = "mako", direction = -1, na.value = "grey90") +
-  labs(title = "Shifting Populations", fill = NULL) +
-  theme_minimal() +
-  theme(
-    plot.title            = element_text(hjust = 0.5, size = 15),
-    plot.subtitle         = element_text(hjust = 0.5, size = 12),
-    legend.box.background = element_rect(
-      fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8)
-  )
-
-# Patch 4: least developed country data
-p4 <- ggplot(map_data_status) +
-  geom_sf(aes(fill = status_proportion), color = "white", linewidth = 0.1) +
-  geom_sf(data = map_ldc_countries, fill = NA, color = "#00E5E5", linewidth = 0.75) +
-  coord_sf(ylim = c(-50, 65), 
-           xlim = c(-110, 180),
-           expand = FALSE) +
-  scale_fill_viridis_c(
-    option    = "rocket", 
-    direction = -1, 
-    na.value  = "grey90",
-    labels    = percent_format(accuracy = 1),
-    ) +
-  labs(
-    title    = "Shifting Languages vs. United Nations Least Developed Countries",
-    subtitle = "Color = Shifting Language Density | Highlighting = Least Developed Countries",
-    caption  = "Source: https://www.un.org/ohrlls/content/list-ldcs",
-    fill     = "Percent 'Shifting'"
-    ) +
-  theme_minimal() + 
-  theme(
-    plot.title            = element_text(hjust = 0.5, size = 15),
-    plot.subtitle         = element_text(hjust = 0.5, size = 12),
-    legend.box.background = element_rect(
-      fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8),
-    legend.position = "inside",
-    legend.position.inside = c(.95, .78)
-  )
-
-p4
+p1b / p2
 ```
 
 #### Shifting Languages vs. Shifting Population
@@ -693,133 +665,56 @@ p4
 What relationship exists between shifting/endangered languages and the average population change of the countries in which it's spoken (last 20 years).
 
 ```{r}
-# Patch 2: gdp data
-p2 <- ggplot(map_data_econ) +
-  geom_sf(aes(fill = avg_annual_gdp_change_20_year), color = "white", linewidth = 0.1) +
-  coord_sf(ylim = c(-60, 85), expand = FALSE) +
-  scale_fill_viridis_c(
-    option = "mako", 
-    direction = -1, 
-    na.value = "grey90",
-    labels = percent_format(accuracy = 1, scale = 1)
-  ) +
-  labs(
-    title    = "Shifting Gross Domestic Product (GDP)", 
-    subtitle = "Average Annual Change in GDP (2004 - 2024)",
-    fill     = "Avg. Annual GDP Change"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title            = element_text(hjust = 0.5, size = 15),
-    plot.subtitle         = element_text(hjust = 0.5, size = 12),
-    legend.box.background = element_rect(
-      fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8),
-    legend.direction = "horizontal",
-    legend.title.position = "top",
-    legend.title = element_text(size = 8, align = "center")
-  )
+#| label: p3-shifting-population
+#| fig-width: 12
+#| fig-asp: .67
+#| warning: False
 
 # Patch 3: population data
 p3 <- ggplot(map_data_econ) +
   geom_sf(aes(fill = avg_annual_pop_change_20_year), color = "white", linewidth = 0.1) +
   coord_sf(ylim = c(-60, 85), expand = FALSE) +
-  scale_fill_viridis_c(option = "mako", direction = -1, na.value = "grey90") +
-  labs(title = "Shifting Populations", fill = NULL) +
+  scale_fill_viridis_c(
+    option = "mako", 
+    direction = -1, 
+    na.value = "grey90",
+    labels    = percent_format(accuracy = 1, scale = 1),
+    ) +
+  labs(
+    title    = "Shifting Populations", 
+    subtitle = "Average Annual Change in Population (2004 - 2024)",
+    fill     = "Avg. Annual Population Change"
+  ) +
   theme_minimal() +
   theme(
     plot.title            = element_text(hjust = 0.5, size = 15),
     plot.subtitle         = element_text(hjust = 0.5, size = 12),
     legend.box.background = element_rect(
       fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8)
+      linewidth = 0.35),
+    legend.position        = "inside",
+    legend.position.inside = c(.15, .18),
+    legend.direction       = "horizontal",
+    legend.title.position  = "top",
+    legend.title           = element_text(hjust = 0.5, size = 8),
+    legend.text            = element_text(hjust = 0.5, size = 7)
   )
-
-# Patch 4: least developed country data
-p4 <- ggplot(map_data_status) +
-  geom_sf(aes(fill = status_proportion), color = "white", linewidth = 0.1) +
-  geom_sf(data = map_ldc_countries, fill = NA, color = "#00E5E5", linewidth = 0.75) +
-  coord_sf(ylim = c(-50, 65), 
-           xlim = c(-110, 180),
-           expand = FALSE) +
-  scale_fill_viridis_c(
-    option    = "rocket", 
-    direction = -1, 
-    na.value  = "grey90",
-    labels    = percent_format(accuracy = 1),
-  ) +
-  labs(
-    title    = "Shifting Languages vs. United Nations Least Developed Countries",
-    subtitle = "Color = Shifting Language Density | Highlighting = Least Developed Countries",
-    caption  = "Source: https://www.un.org/ohrlls/content/list-ldcs",
-    fill     = "Percent 'Shifting'"
-  ) +
-  theme_minimal() + 
-  theme(
-    plot.title            = element_text(hjust = 0.5, size = 15),
-    plot.subtitle         = element_text(hjust = 0.5, size = 12),
-    legend.box.background = element_rect(
-      fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8),
-    legend.position = "inside",
-    legend.position.inside = c(.95, .78)
-  )
-
-p4
+p1b / p3
 ```
 
 #### Shifting Languages vs. UN-Designated Developing Countries
 
 ```{r}
-# Patch 2: gdp data
-p2 <- ggplot(map_data_econ) +
-  geom_sf(aes(fill = avg_annual_gdp_change_20_year), color = "white", linewidth = 0.1) +
-  coord_sf(ylim = c(-60, 85), expand = FALSE) +
-  scale_fill_viridis_c(
-    option = "mako", 
-    direction = -1, 
-    na.value = "grey90",
-    labels = percent_format(accuracy = 1, scale = 1)
-  ) +
-  labs(
-    title    = "Shifting Gross Domestic Product (GDP)", 
-    subtitle = "Average Annual Change in GDP (2004 - 2024)",
-    fill     = "Avg. Annual GDP Change"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title            = element_text(hjust = 0.5, size = 15),
-    plot.subtitle         = element_text(hjust = 0.5, size = 12),
-    legend.box.background = element_rect(
-      fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8),
-    legend.direction = "horizontal",
-    legend.title.position = "top",
-    legend.title = element_text(size = 8, align = "center")
-  )
-
-# Patch 3: population data
-p3 <- ggplot(map_data_econ) +
-  geom_sf(aes(fill = avg_annual_pop_change_20_year), color = "white", linewidth = 0.1) +
-  coord_sf(ylim = c(-60, 85), expand = FALSE) +
-  scale_fill_viridis_c(option = "mako", direction = -1, na.value = "grey90") +
-  labs(title = "Shifting Populations", fill = NULL) +
-  theme_minimal() +
-  theme(
-    plot.title            = element_text(hjust = 0.5, size = 15),
-    plot.subtitle         = element_text(hjust = 0.5, size = 12),
-    legend.box.background = element_rect(
-      fill = "white", color = "black", 
-      linewidth = 0.35, alpha = 0.8)
-  )
+#| label: p4-least-developed-countries
+#| fig-width: 12
+#| fig-asp: .67
+#| warning: False
 
 # Patch 4: least developed country data
 p4 <- ggplot(map_data_status) +
   geom_sf(aes(fill = status_proportion), color = "white", linewidth = 0.1) +
   geom_sf(data = map_ldc_countries, fill = NA, color = "#00E5E5", linewidth = 0.75) +
-  coord_sf(ylim = c(-50, 65), 
-           xlim = c(-110, 180),
-           expand = FALSE) +
+  coord_sf(ylim = c(-60, 85), expand = FALSE) +
   scale_fill_viridis_c(
     option    = "rocket", 
     direction = -1, 
@@ -839,10 +734,13 @@ p4 <- ggplot(map_data_status) +
     legend.box.background = element_rect(
       fill = "white", color = "black", 
       linewidth = 0.35, alpha = 0.8),
-    legend.position = "inside",
-    legend.position.inside = c(.95, .78)
+    legend.position        = "inside",
+    legend.position.inside = c(.15, .18),
+    legend.direction       = "horizontal",
+    legend.title.position  = "top",
+    legend.title           = element_text(hjust = 0.5, size = 8),
+    legend.text            = element_text(hjust = 0.5, size = 7)
   )
-
 p4
 ```
 
